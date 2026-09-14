@@ -86,6 +86,15 @@ frontend/
 - `pages/index.js`: manda al usuario a su página según el rol
 - `pages/admin.js`, `pages/coordinador.js`, `pages/operador.js`: páginas protegidas
 
+### useAuth Hook
+Hook personalizado para proteger rutas y verificar sesión.
+Uso: `const { rol, cargando } = useAuth('administrador');`
+
+### Estilos
+- `styles/login.module.css` -> Diseño responsivo del login
+- `styles/rolePages.module.css` -> Páginas de rol con animaciones
+- `styles/logoutButton.module.css` -> Botón de logout
+
 ## 6. Importante
 
 > Si todo funciona, puedes continuar desarrollando la parte de recepción, proveedores, llegadas, envíos y demás módulos del proyecto. Este punto de autenticación sirve como base segura para la siguiente etapa.
@@ -104,3 +113,9 @@ git push origin feature/tu-nombre
 
 Nunca hagas `push` directo a `main` ni `test` sin revisión.
 
+### Frontend - Mejoras implementadas
+- Diseño responsivo con Bootstrap + CSS modules
+- Animaciones suaves en login y transiciones
+- Credenciales de prueba visibles en formulario
+- Spinner de carga durante login
+- Hook useAuth reutilizable para proteger rutas
