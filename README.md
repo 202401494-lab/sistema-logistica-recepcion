@@ -95,11 +95,7 @@ Uso: `const { rol, cargando } = useAuth('administrador');`
 - `styles/rolePages.module.css` -> Páginas de rol con animaciones
 - `styles/logoutButton.module.css` -> Botón de logout
 
-## 6. Importante
-
-> Si todo funciona, puedes continuar desarrollando la parte de recepción, proveedores, llegadas, envíos y demás módulos del proyecto. Este punto de autenticación sirve como base segura para la siguiente etapa.
-
-## 7. Flujo de Git sugerido
+## 6. Flujo de Git sugerido
 
 ```bash
 git checkout development
@@ -111,7 +107,7 @@ git commit -m "feat: autenticacion jwt y roles"
 git push origin feature/tu-nombre
 ```
 
-Nunca hagas `push` directo a `main` ni `test` sin revisión.
+Nunca debemos hacer `push` directo a `main` ni `test` sin revisión.
 
 ### Frontend - Mejoras implementadas
 - Diseño responsivo con Bootstrap + CSS modules
