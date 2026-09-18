@@ -6,13 +6,15 @@ require('../models/Role');
 // POST /api/auth/login
 const login = async (req, res) => {
   try {
+    // El frontend envía las credenciales dentro del cuerpo JSON de la solicitud.
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ mensaje: 'Correo y contraseña son obligatorios' });
     }
 
-    // populate('roles') trae el documento completo de Role, no solo el ObjectId
+    // Se normaliza el correo porque el esquema lo almacena en minúsculas.
+    // populate('roles') reemplaza los ObjectId por documentos completos de Role.
     const usuario = await Usuario.findOne({ email: email.toLowerCase() }).populate('roles');
 
     if (!usuario) {
@@ -41,6 +43,7 @@ const login = async (req, res) => {
       rol: rolPrincipal,
     };
 
+    // El token dura 24 horas y será enviado al navegador para las siguientes solicitudes.
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     return res.status(200).json({
