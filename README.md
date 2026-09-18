@@ -86,11 +86,16 @@ frontend/
 - `pages/index.js`: manda al usuario a su página según el rol
 - `pages/admin.js`, `pages/coordinador.js`, `pages/operador.js`: páginas protegidas
 
-## 6. Importante
+### useAuth Hook
+Hook personalizado para proteger rutas y verificar sesión.
+Uso: `const { rol, cargando } = useAuth('administrador');`
 
-> Si todo funciona, puedes continuar desarrollando la parte de recepción, proveedores, llegadas, envíos y demás módulos del proyecto. Este punto de autenticación sirve como base segura para la siguiente etapa.
+### Estilos
+- `styles/login.module.css` -> Diseño responsivo del login
+- `styles/rolePages.module.css` -> Páginas de rol con animaciones
+- `styles/logoutButton.module.css` -> Botón de logout
 
-## 7. Flujo de Git sugerido
+## 6. Flujo de Git sugerido
 
 ```bash
 git checkout development
@@ -102,5 +107,11 @@ git commit -m "feat: autenticacion jwt y roles"
 git push origin feature/tu-nombre
 ```
 
-Nunca hagas `push` directo a `main` ni `test` sin revisión.
+Nunca debemos hacer `push` directo a `main` ni `test` sin revisión.
 
+### Frontend - Mejoras implementadas
+- Diseño responsivo con Bootstrap + CSS modules
+- Animaciones suaves en login y transiciones
+- Credenciales de prueba visibles en formulario
+- Spinner de carga durante login
+- Hook useAuth reutilizable para proteger rutas

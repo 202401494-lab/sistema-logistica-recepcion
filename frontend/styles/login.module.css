@@ -1,0 +1,344 @@
+/* Login Styles */
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+    padding: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header Styles */
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #3B82F6;
+    padding-bottom: 1.5rem;
+}
+
+/* Title Styles */
+.title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0 0 0.5rem 0;
+}
+
+/* Subtitle Styles */
+.subtitle {
+    font-size: 0.9rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+/* Form Styles */
+.form {
+    margin-top: 2rem;
+}
+
+/* Label Styles */
+.label {
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+/* Input Styles */
+.input {
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background-color: #F0F9FF;
+}
+
+/* Focus Styles */
+.input:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    outline: none;
+    background-color: white;
+}
+
+/* Disabled Styles */
+.input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+/* Submit Button Styles */
+.submitBtn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+/* Submit Button Hover Styles */
+.submitBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Submit Button Active Styles */
+.submitBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Submit Button Disabled Styles */
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Error Alert Styles */
+.errorAlert {
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #DC2626;
+    background-color: #FEE2E2;
+    color: #991B1B;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    animation: shake 0.4s ease-in-out;
+}
+
+/* Shake Animation */
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Credentials Styles */
+.credentials {
+    padding: 1.5rem;
+    background-color: #F0F9FF;
+    border-radius: 8px;
+}
+
+/* Credentials Title Styles */
+.credentialsTitle {
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Credentials List Styles */
+.credentialsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Credential Item Styles */
+.credentialItem {
+    font-size: 0.85rem;
+    color: #374151;
+    padding: 0.5rem 0.75rem;
+    background-color: white;
+    border-left: 3px solid #3B82F6;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Credential Item Strong Styles */
+.credentialItem strong {
+    color: #1E3A8A;
+    font-weight: 700;
+}
+
+/* Wrapper para layout lado a lado */
+.wrapper {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    max-width: 1000px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 15px 50px rgba(30, 58, 138, 0.25);
+    overflow: hidden;
+}
+
+/* Sección del formulario */
+.formSection {
+    flex: 1;
+    padding: 2.5rem;
+    min-width: 350px;
+}
+
+/* Sección de credenciales */
+.credentialsSection {
+    flex: 1;
+    padding: 2.5rem;
+    background-color: #F0F9FF;
+    border-left: 2px solid #BAE6FD;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 300px;
+}
+
+/* Grupo de formulario */
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+/* Contenedor del input con emoji */
+.inputGroup {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Emoji dentro del input */
+.inputEmoji {
+    position: absolute;
+    left: 12px;
+    font-size: 1.2rem;
+    pointer-events: none;
+    color: #3B82F6;
+}
+
+/* Input ajustado para emoji */
+.inputGroup .input {
+    padding-left: 2.5rem;
+}
+
+/* Password Wrapper - Contenedor con posición relativa */
+.passwordWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    background-color: #F0F9FF;
+    transition: all 0.3s ease;
+}
+
+.passwordWrapper:focus-within {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    background-color: white;
+}
+
+/* Emoji dentro del wrapper */
+.passwordWrapper .inputEmoji {
+    position: absolute;
+    left: 12px;
+    font-size: 1.2rem;
+    pointer-events: none;
+    color: #3B82F6;
+    z-index: 1;
+}
+
+/* Input dentro del wrapper */
+.passwordWrapper .input {
+    border: none;
+    background: transparent;
+    padding-left: 2.5rem;
+    padding-right: 2.8rem;
+    width: 100%;
+}
+
+.passwordWrapper .input:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Botón para mostrar/ocultar contraseña */
+.togglePasswordBtn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.3s ease;
+    color: #6B7280;
+    z-index: 10;
+}
+
+.togglePasswordBtn:hover:not(:disabled) {
+    color: #3B82F6;
+    transform: scale(1.15);
+}
+
+.togglePasswordBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.togglePasswordBtn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .wrapper {
+        flex-direction: column;
+        gap: 0;
+        max-width: 420px;
+    }
+
+    .formSection {
+        padding: 2rem 1.5rem;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .credentialsSection {
+        padding: 2rem 1.5rem;
+        border-left: none;
+        border-top: 2px solid #BAE6FD;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .credentials {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .wrapper {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .formSection {
+        padding: 1.5rem 1rem;
+    }
+
+    .credentialsSection {
+        padding: 1.5rem 1rem;
+    }
+
+    .title {
+        font-size: 1.4rem;
+    }
+
+    .credentialsTitle {
+        font-size: 0.85rem;
+    }
+
+    .credentialItem {
+        font-size: 0.75rem;
+    }
+}

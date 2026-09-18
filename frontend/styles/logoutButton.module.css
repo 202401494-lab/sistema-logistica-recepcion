@@ -1,0 +1,32 @@
+/* Botón de cierre de sesión */
+.logoutBtn {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Efectos de hover */
+.logoutBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(220, 38, 38, 0.3);
+}
+
+/* Efecto de active */
+.logoutBtn:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .logoutBtn {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
