@@ -17,21 +17,22 @@ export function useAuth(rolRequerido = null) {
     /* Efecto para verificar la sesión y el rol del usuario */
     useEffect(() => {
         const token = obtenerToken();
+            // decodeJWT solo lee el contenido; la firma del token se verifica en el backend.
         const payload = token ? decodeJWT(token) : null;
 
-        /* Verifica si el token es válido y no ha expirado */
+        /* Verifica si existe un token legible y si su fecha de expiración aún es válida. */
         if (!token || !payload || tokenExpirado(payload)) {
             router.replace('/login'); /* Redirige al login si no hay token o es inválido */
             return;
         }
 
-        /* Verifica si el rol del usuario coincide con el rol requerido */
+        /* Si una página exige un rol concreto, evita que otro rol vea su contenido. */
         if (rolRequerido && payload.rol !== rolRequerido) {
             router.replace('/acceso-denegado'); /* Redirige a una página de acceso denegado si el rol no coincide */
             return;
         }
 
-        /* Si todo es válido, establece el rol y termina la carga */
+        /* Si todo es válido, entrega el rol al dashboard y termina la carga. */
         setRol(payload.rol);
         setCargando(false);
     }, [rolRequerido, router]);

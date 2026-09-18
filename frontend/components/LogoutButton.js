@@ -17,7 +17,7 @@ export default function LogoutButton() {
   /* Renderiza el botón de cierre de sesión */
   return (
     <button 
-      className={'btn btn-outline-danger ${styles.logoutBtn}'} 
+      className={`btn btn-outline-danger ${styles.logoutBtn}`} 
       onClick={manejarLogout}
     >
       Cerrar sesión 🔐

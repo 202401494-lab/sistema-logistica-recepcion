@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 // Verifica y decodifica el token JWT enviado por el cliente
 const verificarToken = (req, res, next) => {
   try {
+    // El cliente debe enviar: Authorization: Bearer <token>.
     const headerAuth = req.headers.authorization || '';
     const token = headerAuth.startsWith('Bearer ') ? headerAuth.slice(7) : null;
 
@@ -19,6 +20,7 @@ const verificarToken = (req, res, next) => {
       });
     }
 
+    // verify comprueba la firma y también la fecha de expiración del JWT.
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
     // Guardamos la información del usuario decodificada para usarla
@@ -35,6 +37,7 @@ const verificarToken = (req, res, next) => {
 
 // Permite bloquear rutas por uno o varios roles específicos
 const autorizarRoles = (...rolesPermitidos) => {
+  // Se devuelve un middleware configurado con los roles que pueden usar la ruta.
   return (req, res, next) => {
     if (!req.usuario || !req.usuario.rol) {
       return res.status(401).json({ mensaje: 'No se pudo identificar el usuario en el token' });

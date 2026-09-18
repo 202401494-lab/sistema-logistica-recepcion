@@ -50,11 +50,9 @@ export default function Login() {
       guardarSesion(datos.token);
       const payload = decodeJWT(datos.token);
 
-      // Redirección dinámica según el rol contenido en el token
-      if (payload?.rol === 'administrador') router.replace('/admin');
-      else if (payload?.rol === 'coordinador') router.replace('/coordinador');
-      else if (payload?.rol === 'operador') router.replace('/operador');
-      else router.replace('/');
+      // Todos los roles usan la misma pantalla; el dashboard adapta color y acciones.
+      if (payload?.rol) router.replace('/dashboard');
+      else router.replace('/login');
     } catch (err) {
       setError('No se pudo conectar con el servidor. ¿Está corriendo el backend?');
     } finally {
