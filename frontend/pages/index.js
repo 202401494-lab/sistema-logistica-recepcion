@@ -15,7 +15,7 @@ export default function Home() {
       return;
     }
 
-    router.replace(`/${payload.rol}`);
+    router.replace('/dashboard');
   }, [router]);
 
   return null;

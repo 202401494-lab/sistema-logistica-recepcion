@@ -76,6 +76,29 @@
     font-weight: 500;
 }
 
+.actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.actionButton {
+    border: 1px solid #93C5FD;
+    border-radius: 8px;
+    background: white;
+    color: #1E3A8A;
+    padding: 0.75rem 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.actionButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(30, 58, 138, 0.18);
+}
+
 /* Loading Container Styles */
 .loadingContainer {
     min-height: 100vh;
@@ -102,6 +125,10 @@
     .badge {
         font-size: 3rem;
     }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Colores por rol - Con gradientes elegantes */
@@ -115,4 +142,14 @@
 
 .containerOperador {
     background: linear-gradient(135deg, #B45309 0%, #FBBF24 100%);
+}
+
+.containerCoordinador .actionButton {
+    border-color: #6EE7B7;
+    color: #065F46;
+}
+
+.containerOperador .actionButton {
+    border-color: #FCD34D;
+    color: #92400E;
 }
