@@ -19,9 +19,12 @@ const usuariosData = [
 ];
 
 const seed = async () => {
+  // El seed usa la conexión configurada en MONGO_URI para crear datos de prueba.
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Conectado a MongoDB para seed');
 
+  // Se limpian estas colecciones para que el seed sea repetible sin duplicados.
+  // No debe ejecutarse así en producción porque elimina los datos existentes.
   await Role.deleteMany({});
   const rolesCreados = await Role.insertMany(rolesData);
   console.log('Roles creados:', rolesCreados.map((r) => r.nombre).join(', '));
@@ -29,6 +32,7 @@ const seed = async () => {
   await Usuario.deleteMany({});
 
   for (const u of usuariosData) {
+    // La contraseña plana solo se usa durante el seed; MongoDB recibe únicamente el hash.
     const rolDoc = rolesCreados.find((r) => r.nombre === u.rol);
     const passwordHash = await bcrypt.hash(u.passwordPlano, 10);
     await Usuario.create({
