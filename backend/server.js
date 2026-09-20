@@ -10,6 +10,7 @@ const cors = require('cors');
 const conectarDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
+const logisticaRoutes = require('./routes/logisticaRoutes');
 
 const app = express();
 
@@ -28,6 +29,7 @@ conectarDB();
 // RUTAS PÚBLICAS
 // ------------------------------------------------------------
 app.use('/api/auth', authRoutes);
+app.use('/api', logisticaRoutes);
 
 // ------------------------------------------------------------
 // RUTAS PROTEGIDAS
