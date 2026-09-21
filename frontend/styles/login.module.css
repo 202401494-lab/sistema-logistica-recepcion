@@ -114,63 +114,26 @@
 
 /* Shake Animation */
 @keyframes shake {
+
     0%,
     100% {
         transform: translateX(0);
     }
+
     25% {
         transform: translateX(-5px);
     }
+
     75% {
         transform: translateX(5px);
     }
 }
 
-/* Credentials Styles */
-.credentials {
-    padding: 1.5rem;
-    background-color: #F0F9FF;
-    border-radius: 8px;
-}
-
-/* Credentials Title Styles */
-.credentialsTitle {
-    font-weight: 700;
-    color: #1F2937;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-}
-
-/* Credentials List Styles */
-.credentialsList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-/* Credential Item Styles */
-.credentialItem {
-    font-size: 0.85rem;
-    color: #374151;
-    padding: 0.5rem 0.75rem;
-    background-color: white;
-    border-left: 3px solid #3B82F6;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-}
-
-/* Credential Item Strong Styles */
-.credentialItem strong {
-    color: #1E3A8A;
-    font-weight: 700;
-}
-
 /* Wrapper para layout lado a lado */
 .wrapper {
     display: flex;
-    gap: 2rem;
     width: 100%;
-    max-width: 1000px;
+    max-width: 620px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 15px 50px rgba(30, 58, 138, 0.25);
@@ -179,21 +142,10 @@
 
 /* Sección del formulario */
 .formSection {
-    flex: 1;
+    width: 100%;
+    min-width: 0;
     padding: 2.5rem;
-    min-width: 350px;
-}
-
-/* Sección de credenciales */
-.credentialsSection {
-    flex: 1;
-    padding: 2.5rem;
-    background-color: #F0F9FF;
-    border-left: 2px solid #BAE6FD;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 300px;
+    box-sizing: border-box;
 }
 
 /* Grupo de formulario */
@@ -258,6 +210,7 @@
     width: 100%;
 }
 
+/* Focus del input dentro del wrapper */
 .passwordWrapper .input:focus {
     box-shadow: none;
     outline: none;
@@ -340,5 +293,14 @@
 
     .credentialItem {
         font-size: 0.75rem;
+    }
+
+    .wrapper:has(.formSection) {
+        max-width: 620px;
+    }
+
+    .formSection {
+        width: 100%;
+        box-sizing: border-box;
     }
 }
