@@ -131,25 +131,25 @@
     }
 }
 
-/* Colores por rol - Con gradientes elegantes */
+/* Colores por rol */
 .containerAdmin {
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%);
 }
 
 .containerCoordinador {
-    background: linear-gradient(135deg, #065F46 0%, #34D399 100%);
+    background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #0f766e 100%);
 }
 
 .containerOperador {
-    background: linear-gradient(135deg, #B45309 0%, #FBBF24 100%);
+    background: linear-gradient(135deg, #7c2d12 0%, #c2410c 50%, #d97706 100%);
 }
 
 .containerCoordinador .actionButton {
-    border-color: #6EE7B7;
-    color: #065F46;
+    border-color: #34d399;
+    color: #064e3b;
 }
 
 .containerOperador .actionButton {
-    border-color: #FCD34D;
-    color: #92400E;
+    border-color: #fcd34d;
+    color: #7c2d12;
 }
