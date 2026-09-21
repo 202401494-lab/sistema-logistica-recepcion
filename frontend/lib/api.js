@@ -49,7 +49,17 @@ export const registrarProveedor = async (datos) => {
     return procesarRespuesta(respuesta);
 };
 
-/* Función para obtener la lista de proveedores */
+/* Recupera los proveedores guardados para que puedan seleccionarse después de recargar. */
+export const obtenerProveedores = async () => {
+    const respuesta = await fetch(`${API_BASE_URL}/proveedores`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+
+    return procesarRespuesta(respuesta);
+};
+
+/* Función para crear un pedido */
 export const crearPedido = async (datos) => {
     const respuesta = await fetch(`${API_BASE_URL}/pedidos`, {
         method: 'POST',

@@ -4,7 +4,7 @@ import LogoutButton from '../components/LogoutButton';
 import ProveedorForm from '../components/ProveedorForm';
 import PedidoForm from '../components/PedidoForm';
 import PedidoList from '../components/PedidoList';
-import { obtenerPedidos } from '../lib/api';
+import { obtenerPedidos, obtenerProveedores } from '../lib/api';
 import styles from '../styles/dashboard.module.css';
 import roleStyles from '../styles/rolePages.module.css';
 
@@ -58,8 +58,19 @@ export default function Dashboard() {
     }
   };
 
+  /* Carga los proveedores desde MongoDB al abrir el módulo. */
+  const cargarProveedores = async () => {
+    try {
+      const datos = await obtenerProveedores();
+      setProveedores(Array.isArray(datos) ? datos : []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     if (rol === 'coordinador') {
+      cargarProveedores();
       cargarPedidos();
     }
   }, [rol]);
@@ -180,10 +191,11 @@ export default function Dashboard() {
                     <span className={styles.cardLabel}>PANEL DEL COORDINADOR</span>
                     <h2>Últimos pedidos programados</h2>
                   </div>
-                  {/* Puedes colocar un enlace o botón rápido para ir a la pestaña completa */}
                   <button
+                    type="button"
                     className={styles.secondaryButton}
-                    onClick={() => setPestanaActiva('pedidos')}
+                    onClick={() => document.getElementById('pedidos-programados')
+                      ?.scrollIntoView({ behavior: 'smooth' })}
                   >
                     Ver todos
                   </button>

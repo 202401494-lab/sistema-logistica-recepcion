@@ -15,7 +15,7 @@ export default function PedidoList({
     onActualizar,
 }) {
     return (
-        <section className={styles.ordersCard}>
+        <section id="pedidos-programados" className={styles.ordersCard}>
             <div className={styles.sectionHeading}>
                 <div>
                     <span className={styles.cardLabel}>Agenda logística</span>

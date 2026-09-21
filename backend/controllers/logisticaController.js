@@ -89,6 +89,16 @@ const registrarProveedor = async (req, res) => {
   }
 };
 
+const listarProveedores = async (req, res) => {
+  try {
+    const proveedores = await Proveedor.find().sort({ razonSocial: 1 });
+    return res.status(200).json(proveedores);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
+
 const crearPedido = async (req, res) => {
   try {
     const {
@@ -187,4 +197,9 @@ const listarPedidos = async (req, res) => {
   }
 };
 
-module.exports = { registrarProveedor, crearPedido, listarPedidos };
+module.exports = {
+  registrarProveedor,
+  listarProveedores,
+  crearPedido,
+  listarPedidos,
+};
