@@ -1,6 +1,12 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import LogoutButton from '../components/LogoutButton';
-import styles from '../styles/rolePages.module.css';
+import ProveedorForm from '../components/ProveedorForm';
+import PedidoForm from '../components/PedidoForm';
+import PedidoList from '../components/PedidoList';
+import { obtenerPedidos } from '../lib/api';
+import styles from '../styles/dashboard.module.css';
+import roleStyles from '../styles/rolePages.module.css';
 
 // Configuración de la única pantalla principal del sistema.
 // El rol cambia el tema visual y las acciones disponibles, pero no crea otra página.
@@ -25,45 +31,208 @@ const configuracionPorRol = {
   },
 };
 
+/* Componente principal del dashboard que renderiza la interfaz según el rol del usuario */
 export default function Dashboard() {
-  // useAuth valida el token guardado en el navegador antes de mostrar información protegida.
   const { rol, cargando } = useAuth();
 
-  // El fallback evita errores visuales si el token contiene un rol no configurado todavía.
-  const configuracion = configuracionPorRol[rol] || configuracionPorRol.operador;
+  /* Estados para manejar la sección activa, proveedores, pedidos y carga de datos */
+  const [seccionActiva, setSeccionActiva] = useState('resumen');
+  const [proveedores, setProveedores] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [cargandoPedidos, setCargandoPedidos] = useState(false);
 
-  // Mientras se valida la sesión se muestra un indicador y no el contenido del dashboard.
+  const configuracion = configuracionPorRol[rol]
+    || configuracionPorRol.operador;
+
+  /* Función para cargar los pedidos desde el backend y actualizar el estado */
+  const cargarPedidos = async () => {
+    setCargandoPedidos(true);
+    /* Llama a la función obtenerPedidos para traer los pedidos desde el backend */
+    try {
+      const datos = await obtenerPedidos();
+      setPedidos(Array.isArray(datos) ? datos : []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCargandoPedidos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (rol === 'coordinador') {
+      cargarPedidos();
+    }
+  }, [rol]);
+
+  /* Función para manejar la creación de un nuevo proveedor y actualizar la lista de proveedores */
+  const manejarProveedorCreado = (proveedorNuevo) => {
+    setProveedores((actuales) => [
+      ...actuales,
+      proveedorNuevo,
+    ]);
+  };
+
+  /* Función para manejar la creación de un nuevo pedido y actualizar la lista de pedidos */
+  const manejarPedidoCreado = async () => {
+    await cargarPedidos();
+    setSeccionActiva('resumen');
+  };
+
+  /* Renderiza la interfaz de usuario según el estado de carga y el rol del usuario */
   if (cargando) {
     return (
-      <div className={`${styles.loadingContainer} ${styles[configuracion.clase]}`}>
-        <div className="spinner-border text-light" role="status">
-          <span className="visually-hidden">Cargando...</span>
+      <main className={`
+        ${roleStyles.loadingContainer}
+        ${roleStyles[configuracion.clase]}
+      `}
+      >
+        <div className={styles.loadingCard}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Validando sesión...</p>
         </div>
-      </div>
+      </main>
     );
   }
 
-  // Las acciones son botones visuales preparados para conectar después con los módulos reales.
+  /* Renderiza un mensaje de acceso restringido si el rol del usuario no es coordinador */
+  if (rol !== 'coordinador') {
+    return (
+      <main className={`
+        ${roleStyles.container}
+        ${roleStyles[configuracion.clase]}
+      `}
+      >
+        <section className={styles.restrictedCard}>
+          <span className={styles.restrictedIcon}>🚫</span>
+          <h2>Acceso restringido</h2>
+          <p>
+            Este módulo está disponible para el Coordinador Logístico.
+          </p>
+          <LogoutButton />
+        </section>
+      </main>
+    );
+  }
+
+  /* Renderiza la interfaz principal del dashboard para el rol de coordinador */
   return (
-    <main className={`${styles.container} ${styles[configuracion.clase]}`}>
-      <section className={styles.card}>
-        <span className={styles.badge} aria-hidden="true">{rol === 'administrador' ? 'A' : rol === 'coordinador' ? 'C' : 'O'}</span>
-        <h1 className={styles.title}>Bienvenido, {rol.toUpperCase()}</h1>
-        <p className={styles.subtitle}>{configuracion.titulo}</p>
-
-        <div className={styles.content}>
-          <p>{configuracion.descripcion}</p>
-          <div className={styles.actions}>
-            {configuracion.acciones.map((accion) => (
-              // La clave permite que React identifique cada botón dentro de la lista.
-              <button type="button" className={styles.actionButton} key={accion}>
-                {accion}
-              </button>
-            ))}
+    <main className={`
+      ${roleStyles.container}
+      ${roleStyles[configuracion.clase]}
+    `}
+    >
+      <section className={styles.dashboard}>
+        <header className={styles.dashboardHeader}>
+          <div>
+            <span className={styles.eyebrow}>SISTEMA LOGÍSTICO</span>
+            <h1>Centro de Coordinación</h1>
+            <p>
+              Gestiona proveedores y programa pedidos desde un solo lugar.
+            </p>
           </div>
-        </div>
 
-        <LogoutButton />
+          <div className={styles.headerActions}>
+            <span className={styles.roleBadge}>
+              {rol.toUpperCase()}
+            </span>
+            <LogoutButton />
+          </div>
+        </header>
+
+        <nav className={styles.navigation}>
+          <button
+            type="button"
+            className={seccionActiva === 'resumen'
+              ? styles.activeTab
+              : styles.tab}
+            onClick={() => setSeccionActiva('resumen')}
+          >
+            Resumen
+          </button>
+
+          <button
+            type="button"
+            className={seccionActiva === 'proveedor'
+              ? styles.activeTab
+              : styles.tab}
+            onClick={() => setSeccionActiva('proveedor')}
+          >
+            Registrar proveedor
+          </button>
+
+          <button
+            type="button"
+            className={seccionActiva === 'pedido'
+              ? styles.activeTab
+              : styles.tab}
+            onClick={() => setSeccionActiva('pedido')}
+          >
+            Agendar pedido
+          </button>
+        </nav>
+
+        {seccionActiva === 'resumen' && (
+          <>
+            <section className={styles.heroCard}>
+              <div style={{ width: '100%' }}>
+                <div className={styles.sectionHeading} style={{ marginBottom: '16px' }}>
+                  <div>
+                    <span className={styles.cardLabel}>PANEL DEL COORDINADOR</span>
+                    <h2>Últimos pedidos programados</h2>
+                  </div>
+                  {/* Puedes colocar un enlace o botón rápido para ir a la pestaña completa */}
+                  <button
+                    className={styles.secondaryButton}
+                    onClick={() => setPestanaActiva('pedidos')}
+                  >
+                    Ver todos
+                  </button>
+                </div>
+
+                {/* Si hay pedidos, muestra los últimos 2 o 3 */}
+                {pedidos && pedidos.length > 0 ? (
+                  <div className={styles.ordersList}>
+                    {pedidos.slice(0, 3).map((pedido) => (
+                      <div key={pedido.id || pedido._id} className={styles.orderItem}>
+                        <div>
+                          <strong>Pedido #{pedido.numeroPedido || pedido.id}</strong>
+                          <span>Proveedor: {pedido.proveedorNombre || pedido.proveedor}</span>
+                        </div>
+                        <div className={styles.orderDetails}>
+                          <span>{pedido.fecha} — {pedido.horario}</span>
+                          <span className={styles.statusBadge}>Programado</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.9rem' }}>
+                    No hay actividad reciente. Los pedidos que agendes aparecerán aquí.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            <PedidoList
+              pedidos={pedidos}
+              cargando={cargandoPedidos}
+              onActualizar={cargarPedidos}
+            />
+          </>
+        )}
+
+        {seccionActiva === 'proveedor' && (
+          <ProveedorForm
+            onProveedorCreado={manejarProveedorCreado}
+          />
+        )}
+
+        {seccionActiva === 'pedido' && (
+          <PedidoForm
+            proveedores={proveedores}
+            onPedidoCreado={manejarPedidoCreado}
+          />
+        )}
       </section>
     </main>
   );

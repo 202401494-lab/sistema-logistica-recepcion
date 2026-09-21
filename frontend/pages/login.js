@@ -142,24 +142,6 @@ export default function Login() {
             </button>
           </form>
         </div>
-
-        {/* SECCIÓN DERECHA: CREDENCIALES */}
-        <div className={styles.credentialsSection}>
-          <div className={styles.credentials}>
-            <p className={styles.credentialsTitle}>📋 Credenciales de prueba:</p>
-            <div className={styles.credentialsList}>
-              <div className={styles.credentialItem}>
-                <strong>Admin:</strong> admin@test.com / Admin123
-              </div>
-              <div className={styles.credentialItem}>
-                <strong>Coordinador:</strong> coordinador@test.com / Coord123
-              </div>
-              <div className={styles.credentialItem}>
-                <strong>Operador:</strong> operador@test.com / Oper123
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
