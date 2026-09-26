@@ -1,10 +1,11 @@
 const express = require('express');
-const { verificarToken } = require('../middleware/authMiddleware');
+const { verificarToken, autorizarRoles } = require('../middleware/authMiddleware');
 const {
   registrarProveedor,
   listarProveedores,
   crearPedido,
   listarPedidos,
+  registrarLlegada,
   actualizarProveedor,
   inactivarProveedor,
   reprogramarPedido,
@@ -23,6 +24,7 @@ router.put('/proveedores/:id', actualizarProveedor);
 router.delete('/proveedores/:id', inactivarProveedor);
 router.post('/pedidos', crearPedido);
 router.get('/pedidos', listarPedidos);
+router.patch('/pedidos/:id/llegada', autorizarRoles('operador', 'administrador'), registrarLlegada);
 router.patch('/pedidos/:id/reprogramar', reprogramarPedido);
 // DELETE cancela el pedido y marca activo: false.
 router.delete('/pedidos/:id', cancelarPedido);
