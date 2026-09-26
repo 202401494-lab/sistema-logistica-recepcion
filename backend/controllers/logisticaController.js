@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Proveedor = require('../models/Proveedor');
 const Pedido = require('../models/Pedido');
+const { clasificarLlegada, obtenerFechaLlegada } = require('../services/clasificacionLlegada');
 
 // RN-02: la operación funciona de 07:00 a 17:00, de lunes a sábado.
 const HORA_APERTURA = 7;
@@ -224,6 +225,51 @@ const listarPedidos = async (req, res) => {
   }
 };
 
+const registrarLlegada = async (req, res) => {
+  try {
+    const datos = req.body && typeof req.body === 'object' ? req.body : {};
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ mensaje: 'El id del pedido no es válido' });
+    }
+    const ahora = new Date();
+    const llegada = obtenerFechaLlegada(datos.fechaHoraLlegadaReal, ahora);
+    if (!llegada) {
+      return res.status(400).json({ mensaje: 'La fechaHoraLlegadaReal debe ser válida y no futura' });
+    }
+
+    const pedido = await Pedido.findOne({ _id: req.params.id, activo: true });
+    if (!pedido) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    if (pedido.estado !== 'PROGRAMADO') {
+      return res.status(409).json({ mensaje: 'Solo se puede registrar la llegada de un pedido programado' });
+    }
+    if (pedido.fechaHoraLlegadaReal) {
+      return res.status(409).json({ mensaje: 'El pedido ya tiene una llegada registrada' });
+    }
+
+    const estadoPuntualidad = clasificarLlegada(llegada, pedido.inicioVentana, pedido.finVentana);
+    const enEspera = estadoPuntualidad === 'Anticipado' && ahora < pedido.inicioVentana;
+    const usuario = req.usuario?.nombreCompleto || req.usuario?.email || 'sistema';
+    const actualizado = await Pedido.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        activo: true,
+        estado: 'PROGRAMADO',
+        fechaHoraLlegadaReal: { $exists: false },
+      },
+      { $set: { fechaHoraLlegadaReal: llegada, estadoPuntualidad, enEspera } },
+      { new: true, usuarioActualizacion: usuario },
+    );
+    if (!actualizado) {
+      return res.status(409).json({ mensaje: 'El pedido cambió o ya tiene una llegada registrada' });
+    }
+    return res.status(200).json(actualizado);
+  } catch (error) {
+    if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id del pedido no es válido' });
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
+
 const actualizarProveedor = async (req, res) => {
   try {
     // Solo se actualiza un proveedor activo y se conserva la validación del esquema.
@@ -276,6 +322,9 @@ const reprogramarPedido = async (req, res) => {
     // Se edita la cita existente y se excluye su propio id al buscar solapamientos.
     const pedido = await Pedido.findOne({ _id: req.params.id, activo: true });
     if (!pedido) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    if (pedido.fechaHoraLlegadaReal) {
+      return res.status(409).json({ mensaje: 'No se puede reprogramar un pedido con llegada registrada' });
+    }
     const { fechaHoraProgramada, inicioVentana, finVentana } = req.body;
     if (!esFechaValida(fechaHoraProgramada) || !esFechaValida(inicioVentana) || !esFechaValida(finVentana)) {
       return res.status(400).json({ mensaje: 'Las fechas del pedido no son válidas' });
@@ -328,6 +377,7 @@ module.exports = {
   listarProveedores,
   crearPedido,
   listarPedidos,
+  registrarLlegada,
   actualizarProveedor,
   inactivarProveedor,
   reprogramarPedido,

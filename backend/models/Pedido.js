@@ -17,6 +17,11 @@ const pedidoSchema = new mongoose.Schema(
     fechaHoraProgramada: { type: Date, required: true },
     // La llegada actualiza el pedido existente; no se crea una colección arribos.
     fechaHoraLlegadaReal: { type: Date },
+    estadoPuntualidad: {
+      type: String,
+      enum: ['A tiempo', 'Anticipado', 'Tardío', 'Ausente'],
+    },
+    enEspera: { type: Boolean, default: false },
     inicioVentana: { type: Date, required: true },
     finVentana: { type: Date, required: true },
     duracionEstimadaMinutos: { type: Number, required: true, min: 1 },

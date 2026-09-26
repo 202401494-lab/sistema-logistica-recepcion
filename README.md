@@ -1,12 +1,14 @@
 # sistema-logistica-recepcion
 Equipo 5 de proyecto integrador: sistema web completo para controlar el proceso logístico de recepción de proveedores en un centro de distribución. La solución debe gestionar el registro de pedidos, la programación de citas, la recepción física del proveedor, la clasificación automática de puntualidad.
 
+El contexto funcional común para el equipo está en [Fase 0 - Contexto funcional](docs/contexto-fase-0.md).
+
 # Proyecto base: autenticación JWT + RBAC
 
 Este repositorio ya tiene la base funcional de autenticación con Express + MongoDB + Next.js. La idea es que te sirva como punto de partida para la parte de login y control de acceso del sistema logístico.
 
 ## 1. Requisitos previos
-- Node.js instalado
+- Node.js 18 o superior
 - MongoDB corriendo localmente en el puerto 27017
 - Tener creada la base de datos que se usa en el archivo `.env` del backend
 
@@ -19,6 +21,8 @@ copy .env.example .env
 npm run seed
 npm run dev
 ```
+
+Antes de iniciar, reemplaza `JWT_SECRET` en `.env` por una clave aleatoria local. No compartas ni subas `.env`; el archivo está excluido por `.gitignore`.
 
 ### Usuarios de prueba
 
@@ -34,6 +38,17 @@ npm run dev
 - GET `/api/perfil` -> requiere token JWT válido
 - GET `/api/admin/dashboard` -> solo administradores
 - GET `/api/coordinacion` -> administradores y coordinadores
+- PATCH `/api/pedidos/:id/llegada` -> operador o administrador; registra hora real, puntualidad y espera anticipada
+- GET/POST `/api/parametros` y PUT/DELETE `/api/parametros/:id` -> solo administradores
+
+Para activar la marcación automática de ausencias, crea `TOLERANCIA_LLEGADA_MINUTOS` con un valor entero igual o mayor a cero. Si el parámetro se inactiva, un nuevo POST con la misma clave lo reactiva y actualiza el valor. El backend revisa los pedidos cada minuto; no aplica una tolerancia predeterminada si el parámetro no está configurado.
+
+### Pruebas del backend
+
+```bash
+cd backend
+npm test
+```
 
 ## 3. Frontend
 

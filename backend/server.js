@@ -11,6 +11,8 @@ const conectarDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
 const logisticaRoutes = require('./routes/logisticaRoutes');
+const parametroRoutes = require('./routes/parametroRoutes');
+const actualizarEstadosLlegadas = require('./services/llegadasScheduler');
 
 const app = express();
 
@@ -30,6 +32,7 @@ conectarDB();
 // ------------------------------------------------------------
 app.use('/api/auth', authRoutes);
 app.use('/api', logisticaRoutes);
+app.use('/api/parametros', parametroRoutes);
 
 // ------------------------------------------------------------
 // RUTAS PROTEGIDAS
@@ -41,6 +44,11 @@ app.use('/api', protectedRoutes);
 // ARRANQUE DEL SERVIDOR
 // ------------------------------------------------------------
 const PORT = process.env.PORT || 4000;
+const intervaloLlegadas = setInterval(() => {
+  actualizarEstadosLlegadas().catch((error) => console.error('Error al actualizar estados de llegada:', error));
+}, 60 * 1000);
+intervaloLlegadas.unref();
+
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
