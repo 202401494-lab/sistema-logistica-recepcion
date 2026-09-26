@@ -50,19 +50,21 @@ export const validarHorario = ({
 
     /* Validación de que la cita esté dentro del horario operativo y en la misma fecha */
     const mismaFecha = inicio.toDateString() === fin.toDateString();
+    const domingo = inicio.getDay() === 0;
 
-    if (!mismaFecha) {
+    if (!mismaFecha || domingo) {
         return 'La ventana debe comenzar y terminar el mismo día.';
     }
 
+    // Mantiene RN-02 alineada con el horario validado por el backend.
     const fueraDeHorario = (
-        inicio.getHours() < 8
+        inicio.getHours() < 7
         || fin.getHours() > 17
         || (fin.getHours() === 17 && fin.getMinutes() > 0)
     );
 
     if (fueraDeHorario) {
-        return 'El horario operativo es de 08:00 a 17:00.';
+        return 'El horario operativo es de 07:00 a 17:00, de lunes a sábado.';
     }
 
     if (programada < inicio || programada > fin) {

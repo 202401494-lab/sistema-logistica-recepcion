@@ -134,7 +134,8 @@ export default function PedidoForm({
                 <div>
                     <span className={styles.cardLabel}>Nueva programación</span>
                     <h2>Agendar pedido</h2>
-                    <p>Horario operativo permitido: 08:00 a 17:00.</p>
+                    {/* El texto visible debe coincidir con la validación de RN-02. */}
+                    <p>Horario operativo permitido: 07:00 a 17:00.</p>
                 </div>
             </div>
 

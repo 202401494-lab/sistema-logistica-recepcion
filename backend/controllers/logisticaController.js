@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 const Proveedor = require('../models/Proveedor');
 const Pedido = require('../models/Pedido');
 
-const HORA_APERTURA = 8;
+// RN-02: la operación funciona de 07:00 a 17:00, de lunes a sábado.
+const HORA_APERTURA = 7;
 const HORA_CIERRE = 17;
 const DURACION_ALTERNATIVA_MINUTOS = 60;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +16,10 @@ const esFechaValida = (valor) => {
 
 const estaEnHorarioOperativo = (inicio, fin) => {
   const mismaFecha = inicio.toDateString() === fin.toDateString();
+  // JavaScript representa el domingo con 0; las citas solo operan de lunes a sábado.
+  const diaOperativo = inicio.getDay() !== 0;
   return mismaFecha
+    && diaOperativo
     && inicio.getHours() >= HORA_APERTURA
     && (fin.getHours() < HORA_CIERRE
       || (fin.getHours() === HORA_CIERRE && fin.getMinutes() === 0));
@@ -31,6 +35,7 @@ const obtenerAlternativas = async (inicioSolicitado, duracionMinutos) => {
   const finDelDia = new Date(inicioSolicitado);
   finDelDia.setHours(HORA_CIERRE, 0, 0, 0);
   const pedidos = await Pedido.find({
+    activo: true,
     estado: 'PROGRAMADO',
     inicioVentana: { $lt: finDelDia },
     finVentana: { $gt: inicioDelDia },
@@ -50,6 +55,29 @@ const obtenerAlternativas = async (inicioSolicitado, duracionMinutos) => {
     if (alternativas.length === 3) break;
   }
   return alternativas;
+};
+
+// Obtiene la identidad para auditoría y mantiene compatibilidad con tokens antiguos.
+const nombreUsuario = (req) => req.usuario?.nombreCompleto
+  || [req.usuario?.nombres, req.usuario?.apellidosCompleto].filter(Boolean).join(' ')
+  || req.usuario?.email
+  || 'sistema';
+
+// Centraliza las reglas de horario y solapamiento para crear y reprogramar pedidos.
+const validarVentanaPedido = async ({ inicio, fin, programada, duracion, excluirId }) => {
+  if (fin <= inicio) return 'finVentana debe ser posterior a inicioVentana';
+  if (!estaEnHorarioOperativo(inicio, fin)) return 'La ventana debe estar entre las 07:00 y las 17:00 de lunes a sábado y el mismo día';
+  if (programada < inicio || programada > fin) return 'fechaHoraProgramada debe estar dentro de la ventana solicitada';
+
+  const filtro = {
+    activo: true,
+    estado: 'PROGRAMADO',
+    inicioVentana: { $lt: fin },
+    finVentana: { $gt: inicio },
+  };
+  if (excluirId) filtro._id = { $ne: excluirId };
+  const solapado = await Pedido.findOne(filtro);
+  return solapado ? { solapado: true } : null;
 };
 
 const registrarProveedor = async (req, res) => {
@@ -75,7 +103,13 @@ const registrarProveedor = async (req, res) => {
       return res.status(409).json({ mensaje: 'La identificacionTributaria ya está registrada' });
     }
 
-    const proveedor = await Proveedor.create({ ...datos, identificacionTributaria: identificacion });
+    const usuario = nombreUsuario(req);
+    const proveedor = await Proveedor.create({
+      ...datos,
+      identificacionTributaria: identificacion,
+      usuarioCreacion: usuario,
+      usuarioActualizacion: usuario,
+    });
     return res.status(201).json(proveedor);
   } catch (error) {
     if (error.code === 11000) {
@@ -119,7 +153,7 @@ const crearPedido = async (req, res) => {
       return res.status(400).json({ mensaje: 'El proveedorId no tiene un formato válido' });
     }
     const proveedor = await Proveedor.findById(proveedorId);
-    if (!proveedor) {
+    if (!proveedor || !proveedor.activo) {
       return res.status(404).json({ mensaje: 'El proveedorId no corresponde a un proveedor registrado' });
     }
     if (!['construcción', 'general'].includes(tipoProducto)) {
@@ -139,24 +173,15 @@ const crearPedido = async (req, res) => {
     if (fin <= inicio) {
       return res.status(400).json({ mensaje: 'finVentana debe ser posterior a inicioVentana' });
     }
-    if (!estaEnHorarioOperativo(inicio, fin)) {
-      return res.status(400).json({ mensaje: 'La ventana debe estar entre las 08:00 y las 17:00 del mismo día' });
-    }
-    if (programada < inicio || programada > fin) {
-      return res.status(400).json({ mensaje: 'fechaHoraProgramada debe estar dentro de la ventana solicitada' });
-    }
+    const errorVentana = await validarVentanaPedido({ inicio, fin, programada, duracion });
+    if (typeof errorVentana === 'string') return res.status(400).json({ mensaje: errorVentana });
 
     const pedidoExistente = await Pedido.findOne({ numeroPedido: String(numeroPedido).trim() });
     if (pedidoExistente) {
       return res.status(409).json({ mensaje: 'El numeroPedido ya está registrado' });
     }
 
-    const solapado = await Pedido.findOne({
-      estado: 'PROGRAMADO',
-      inicioVentana: { $lt: fin },
-      finVentana: { $gt: inicio },
-    });
-    if (solapado) {
+    if (errorVentana?.solapado) {
       const alternativas = await obtenerAlternativas(inicio, duracion);
       return res.status(409).json({
         mensaje: 'La ventana solicitada se solapa con otro pedido programado',
@@ -173,6 +198,8 @@ const crearPedido = async (req, res) => {
       finVentana: fin,
       duracionEstimadaMinutos: duracion,
       estado: 'PROGRAMADO',
+      usuarioCreacion: nombreUsuario(req),
+      usuarioActualizacion: nombreUsuario(req),
     });
     return res.status(201).json(pedido);
   } catch (error) {
@@ -197,9 +224,112 @@ const listarPedidos = async (req, res) => {
   }
 };
 
+const actualizarProveedor = async (req, res) => {
+  try {
+    // Solo se actualiza un proveedor activo y se conserva la validación del esquema.
+    const datos = { ...req.body };
+    if (datos.identificacionTributaria) {
+      datos.identificacionTributaria = String(datos.identificacionTributaria).trim().toUpperCase();
+      if (!IDENTIFICACION_REGEX.test(datos.identificacionTributaria)) {
+        return res.status(400).json({ mensaje: 'La identificacionTributaria tiene un formato inválido' });
+      }
+    }
+    if (datos.emailContacto && !EMAIL_REGEX.test(String(datos.emailContacto).trim())) {
+      return res.status(400).json({ mensaje: 'El emailContacto tiene un formato inválido' });
+    }
+    const proveedor = await Proveedor.findOneAndUpdate(
+      { _id: req.params.id, activo: true },
+      { ...datos, usuarioActualizacion: nombreUsuario(req) },
+      { new: true, runValidators: true, usuarioActualizacion: nombreUsuario(req) },
+    );
+    if (!proveedor) return res.status(404).json({ mensaje: 'Proveedor no encontrado' });
+    return res.status(200).json(proveedor);
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ mensaje: 'La identificacionTributaria ya está registrada' });
+    if (error.name === 'ValidationError' || error.name === 'CastError') {
+      return res.status(400).json({ mensaje: 'Los datos del proveedor no son válidos', detalle: error.message });
+    }
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
+
+const inactivarProveedor = async (req, res) => {
+  try {
+    // DELETE es lógico: el documento permanece disponible para auditoría.
+    const proveedor = await Proveedor.findOneAndUpdate(
+      { _id: req.params.id, activo: true },
+      { activo: false, estado: 'inactivo', usuarioActualizacion: nombreUsuario(req) },
+      { new: true, usuarioActualizacion: nombreUsuario(req) },
+    );
+    if (!proveedor) return res.status(404).json({ mensaje: 'Proveedor no encontrado' });
+    return res.status(200).json(proveedor);
+  } catch (error) {
+    if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id del proveedor no es válido' });
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
+
+const reprogramarPedido = async (req, res) => {
+  try {
+    // Se edita la cita existente y se excluye su propio id al buscar solapamientos.
+    const pedido = await Pedido.findOne({ _id: req.params.id, activo: true });
+    if (!pedido) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    const { fechaHoraProgramada, inicioVentana, finVentana } = req.body;
+    if (!esFechaValida(fechaHoraProgramada) || !esFechaValida(inicioVentana) || !esFechaValida(finVentana)) {
+      return res.status(400).json({ mensaje: 'Las fechas del pedido no son válidas' });
+    }
+    const inicio = new Date(inicioVentana);
+    const fin = new Date(finVentana);
+    const programada = new Date(fechaHoraProgramada);
+    const validacion = await validarVentanaPedido({
+      inicio, fin, programada, duracion: pedido.duracionEstimadaMinutos, excluirId: pedido._id,
+    });
+    if (typeof validacion === 'string') return res.status(400).json({ mensaje: validacion });
+    if (validacion?.solapado) {
+      return res.status(409).json({
+        mensaje: 'La ventana solicitada se solapa con otro pedido programado',
+        alternativas: await obtenerAlternativas(inicio, pedido.duracionEstimadaMinutos),
+      });
+    }
+    pedido.fechaHoraProgramada = programada;
+    pedido.inicioVentana = inicio;
+    pedido.finVentana = fin;
+    pedido.usuarioActualizacion = nombreUsuario(req);
+    await pedido.save({ usuarioActualizacion: nombreUsuario(req) });
+    return res.status(200).json(pedido);
+  } catch (error) {
+    if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id del pedido no es válido' });
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
+
+const cancelarPedido = async (req, res) => {
+  try {
+    // La cancelación combina el estado de negocio con soft delete.
+    const pedido = await Pedido.findOneAndUpdate(
+      { _id: req.params.id, activo: true },
+      { estado: 'CANCELADO', activo: false, usuarioActualizacion: nombreUsuario(req) },
+      { new: true, usuarioActualizacion: nombreUsuario(req) },
+    );
+    if (!pedido) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    return res.status(200).json(pedido);
+  } catch (error) {
+    if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id del pedido no es válido' });
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
+
 module.exports = {
   registrarProveedor,
   listarProveedores,
   crearPedido,
   listarPedidos,
+  actualizarProveedor,
+  inactivarProveedor,
+  reprogramarPedido,
+  cancelarPedido,
 };
