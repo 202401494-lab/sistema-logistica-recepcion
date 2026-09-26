@@ -41,6 +41,8 @@ const login = async (req, res) => {
       id: usuario._id,
       email: usuario.email,
       rol: rolPrincipal,
+      // Permite registrar el nombre completo sin consultar al usuario en cada operación.
+      nombreCompleto: `${usuario.nombres} ${usuario.apellidosCompleto}`.trim(),
     };
 
     // El token dura 24 horas y será enviado al navegador para las siguientes solicitudes.

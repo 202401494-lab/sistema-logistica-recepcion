@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const auditoriaSoftDelete = require('../plugins/auditoriaSoftDelete');
 
 const pedidoSchema = new mongoose.Schema(
   {
@@ -14,6 +15,8 @@ const pedidoSchema = new mongoose.Schema(
       enum: ['construcción', 'general'],
     },
     fechaHoraProgramada: { type: Date, required: true },
+    // La llegada actualiza el pedido existente; no se crea una colección arribos.
+    fechaHoraLlegadaReal: { type: Date },
     inicioVentana: { type: Date, required: true },
     finVentana: { type: Date, required: true },
     duracionEstimadaMinutos: { type: Number, required: true, min: 1 },
@@ -25,5 +28,7 @@ const pedidoSchema = new mongoose.Schema(
   },
   { timestamps: true, collection: 'pedidos' }
 );
+
+pedidoSchema.plugin(auditoriaSoftDelete);
 
 module.exports = mongoose.model('Pedido', pedidoSchema);

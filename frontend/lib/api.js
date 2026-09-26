@@ -59,6 +59,27 @@ export const obtenerProveedores = async () => {
     return procesarRespuesta(respuesta);
 };
 
+/* Actualiza los datos de contacto y generales de un proveedor activo. */
+export const actualizarProveedor = async (id, datos) => {
+    const respuesta = await fetch(`${API_BASE_URL}/proveedores/${id}`, {
+        method: 'PUT',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datos),
+    });
+
+    return procesarRespuesta(respuesta);
+};
+
+/* Inactiva lógicamente un proveedor. */
+export const inactivarProveedor = async (id) => {
+    const respuesta = await fetch(`${API_BASE_URL}/proveedores/${id}`, {
+        method: 'DELETE',
+        headers: obtenerHeaders(),
+    });
+
+    return procesarRespuesta(respuesta);
+};
+
 /* Función para crear un pedido */
 export const crearPedido = async (datos) => {
     const respuesta = await fetch(`${API_BASE_URL}/pedidos`, {
@@ -74,6 +95,27 @@ export const crearPedido = async (datos) => {
 export const obtenerPedidos = async () => {
     const respuesta = await fetch(`${API_BASE_URL}/pedidos`, {
         method: 'GET',
+        headers: obtenerHeaders(),
+    });
+
+    return procesarRespuesta(respuesta);
+};
+
+/* Reprograma la ventana y la cita de un pedido. */
+export const reprogramarPedido = async (id, datos) => {
+    const respuesta = await fetch(`${API_BASE_URL}/pedidos/${id}/reprogramar`, {
+        method: 'PATCH',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datos),
+    });
+
+    return procesarRespuesta(respuesta);
+};
+
+/* Cancela un pedido mediante soft delete. */
+export const cancelarPedido = async (id) => {
+    const respuesta = await fetch(`${API_BASE_URL}/pedidos/${id}`, {
+        method: 'DELETE',
         headers: obtenerHeaders(),
     });
 

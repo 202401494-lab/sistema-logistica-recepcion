@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const auditoriaSoftDelete = require('../plugins/auditoriaSoftDelete');
 
 const proveedorSchema = new mongoose.Schema(
   {
@@ -33,5 +34,7 @@ const proveedorSchema = new mongoose.Schema(
   },
   { timestamps: true, collection: 'proveedores' }
 );
+
+proveedorSchema.plugin(auditoriaSoftDelete);
 
 module.exports = mongoose.model('Proveedor', proveedorSchema);
