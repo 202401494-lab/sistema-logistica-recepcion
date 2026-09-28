@@ -9,7 +9,6 @@ import styles from '../styles/dashboard.module.css';
 import roleStyles from '../styles/rolePages.module.css';
 
 // Configuración de la única pantalla principal del sistema.
-// El rol cambia el tema visual y las acciones disponibles, pero no crea otra página.
 const configuracionPorRol = {
   administrador: {
     titulo: 'Centro de Administración',
@@ -40,14 +39,13 @@ export default function Dashboard() {
   const [proveedores, setProveedores] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(false);
+  const [mostrarModalTodos, setMostrarModalTodos] = useState(false);
 
-  const configuracion = configuracionPorRol[rol]
-    || configuracionPorRol.operador;
+  const configuracion = configuracionPorRol[rol] || configuracionPorRol.operador;
 
   /* Función para cargar los pedidos desde el backend y actualizar el estado */
   const cargarPedidos = async () => {
     setCargandoPedidos(true);
-    /* Llama a la función obtenerPedidos para traer los pedidos desde el backend */
     try {
       const datos = await obtenerPedidos();
       setPedidos(Array.isArray(datos) ? datos : []);
@@ -69,13 +67,13 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (rol === 'coordinador') {
+    if (rol === 'coordinador' || rol === 'administrador' || rol === 'operador') {
       cargarProveedores();
       cargarPedidos();
     }
   }, [rol]);
 
-  /* Función para manejar la creación de un nuevo proveedor y actualizar la lista de proveedores */
+  /* Función para manejar la creación de un nuevo proveedor */
   const manejarProveedorCreado = (proveedorNuevo) => {
     setProveedores((actuales) => [
       ...actuales,
@@ -83,13 +81,59 @@ export default function Dashboard() {
     ]);
   };
 
-  /* Función para manejar la creación de un nuevo pedido y actualizar la lista de pedidos */
+  /* Función para manejar la creación de un nuevo pedido */
   const manejarPedidoCreado = async () => {
     await cargarPedidos();
     setSeccionActiva('resumen');
   };
 
-  /* Renderiza la interfaz de usuario según el estado de carga y el rol del usuario */
+  /* Función para obtener el nombre del proveedor de un pedido */
+  const obtenerNombreProveedor = (p) => {
+    if (!p) return 'No especificado';
+
+    // 1. Si viene como objeto poblado por Mongoose { _id, nombre, razonSocial }
+    if (typeof p.proveedorId === 'object' && p.proveedorId !== null) {
+      return p.proveedorId.nombre || p.proveedorId.razonSocial || p.proveedorId.empresa || 'No especificado';
+    }
+    if (typeof p.proveedor === 'object' && p.proveedor !== null) {
+      return p.proveedor.nombre || p.proveedor.razonSocial || p.proveedor.empresa || 'No especificado';
+    }
+
+    // 2. Si viene como texto plano directo en el pedido
+    if (typeof p.proveedorNombre === 'string' && p.proveedorNombre.trim()) return p.proveedorNombre;
+    if (typeof p.proveedor === 'string' && p.proveedor.trim().length > 0 && !p.proveedor.startsWith('6')) {
+      return p.proveedor;
+    }
+
+    // 3. Si el ID de MongoDB está guardado en proveedorId, proveedor o id
+    const idBuscado = String(p.proveedorId?._id || p.proveedorId || p.proveedor || '');
+    if (idBuscado && Array.isArray(proveedores) && proveedores.length > 0) {
+      const encontrado = proveedores.find((prov) => String(prov._id || prov.id) === idBuscado);
+      if (encontrado) {
+        return encontrado.nombre || encontrado.razonSocial || encontrado.nombreEmpresa || encontrado.categoria || 'No especificado';
+      }
+    }
+
+    // 4. Si el pedido trae una categoría o descripción directa
+    if (p.categoria) return p.categoria;
+    if (p.descripcion) return p.descripcion;
+
+    return 'No especificado';
+  };
+
+  /* Función para formatear la fecha y hora de un pedido, considerando diferentes campos posibles */
+  const obtenerFechaFormateada = (p) => {
+    const fechaBase = p.fechaHoraProgramada || p.fecha || p.createdAt;
+    if (!fechaBase) return 'Sin fecha';
+    try {
+      const date = new Date(fechaBase);
+      return `${date.toLocaleDateString()} ${p.horario ? '— ' + p.horario : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } catch (e) {
+      return p.fecha || 'Sin fecha';
+    }
+  };
+
+  /* Renderiza la interfaz según el estado de carga */
   if (cargando) {
     return (
       <main className={`
@@ -105,8 +149,11 @@ export default function Dashboard() {
     );
   }
 
-  /* Renderiza un mensaje de acceso restringido si el rol del usuario no es coordinador */
-  if (rol !== 'coordinador') {
+  /* Roles con acceso al Dashboard */
+  const rolesPermitidos = ['coordinador', 'administrador', 'operador'];
+
+  /* Muestra mensaje de restricción únicamente si el rol no pertenece a los permitidos */
+  if (!rolesPermitidos.includes(rol)) {
     return (
       <main className={`
         ${roleStyles.container}
@@ -117,7 +164,7 @@ export default function Dashboard() {
           <span className={styles.restrictedIcon}>🚫</span>
           <h2>Acceso restringido</h2>
           <p>
-            Este módulo está disponible para el Coordinador Logístico.
+            No tienes los permisos necesarios para acceder a este módulo.
           </p>
           <LogoutButton />
         </section>
@@ -125,7 +172,7 @@ export default function Dashboard() {
     );
   }
 
-  /* Renderiza la interfaz principal del dashboard para el rol de coordinador */
+  /* Renderiza la interfaz principal del dashboard */
   return (
     <main className={`
       ${roleStyles.container}
@@ -136,49 +183,54 @@ export default function Dashboard() {
         <header className={styles.dashboardHeader}>
           <div>
             <span className={styles.eyebrow}>SISTEMA LOGÍSTICO</span>
-            <h1>Centro de Coordinación</h1>
-            <p>
-              Gestiona proveedores y programa pedidos desde un solo lugar.
-            </p>
+            <h1>{configuracion.titulo}</h1>
+            <p>{configuracion.descripcion}</p>
           </div>
 
           <div className={styles.headerActions}>
             <span className={styles.roleBadge}>
-              {rol.toUpperCase()}
+              {(rol || '').toUpperCase()}
             </span>
             <LogoutButton />
           </div>
         </header>
 
         <nav className={styles.navigation}>
-          <button
-            type="button"
-            className={seccionActiva === 'resumen'
-              ? styles.activeTab
-              : styles.tab}
-            onClick={() => setSeccionActiva('resumen')}
-          >
-            Resumen
-          </button>
+          {rol === 'coordinador' && (
+            <>
+              <button
+                type="button"
+                className={seccionActiva === 'resumen' ? styles.activeTab : styles.tab}
+                onClick={() => setSeccionActiva('resumen')}
+              >
+                Resumen
+              </button>
 
-          <button
-            type="button"
-            className={seccionActiva === 'proveedor'
-              ? styles.activeTab
-              : styles.tab}
-            onClick={() => setSeccionActiva('proveedor')}
-          >
-            Registrar proveedor
-          </button>
+              <button
+                type="button"
+                className={seccionActiva === 'proveedor' ? styles.activeTab : styles.tab}
+                onClick={() => setSeccionActiva('proveedor')}
+              >
+                Registrar proveedor
+              </button>
 
+              <button
+                type="button"
+                className={seccionActiva === 'pedido' ? styles.activeTab : styles.tab}
+                onClick={() => setSeccionActiva('pedido')}
+              >
+                Agendar pedido
+              </button>
+            </>
+          )}
+
+          {/* Botón de caseta visible para Operador y Administrador (y Coordinador si navega) */}
           <button
             type="button"
-            className={seccionActiva === 'pedido'
-              ? styles.activeTab
-              : styles.tab}
-            onClick={() => setSeccionActiva('pedido')}
+            className={styles.tab}
+            onClick={() => window.location.href = '/caseta'}
           >
-            Agendar pedido
+            Caseta
           </button>
         </nav>
 
@@ -186,40 +238,48 @@ export default function Dashboard() {
           <>
             <section className={styles.heroCard}>
               <div style={{ width: '100%' }}>
-                <div className={styles.sectionHeading} style={{ marginBottom: '16px' }}>
+                <div className={styles.sectionHeading}>
                   <div>
-                    <span className={styles.cardLabel}>PANEL DEL COORDINADOR</span>
+                    <span className={styles.cardLabel}>PANEL GENERAL</span>
                     <h2>Últimos pedidos programados</h2>
                   </div>
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    onClick={() => document.getElementById('pedidos-programados')
-                      ?.scrollIntoView({ behavior: 'smooth' })}
-                  >
-                    Ver todos
-                  </button>
+                  {pedidos && pedidos.length > 0 && (
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => setMostrarModalTodos(true)}
+                    >
+                      Ver todos ({pedidos.length})
+                    </button>
+                  )}
                 </div>
 
-                {/* Si hay pedidos, muestra los últimos 2 o 3 */}
                 {pedidos && pedidos.length > 0 ? (
                   <div className={styles.ordersList}>
                     {pedidos.slice(0, 3).map((pedido) => (
                       <div key={pedido.id || pedido._id} className={styles.orderItem}>
                         <div>
-                          <strong>Pedido #{pedido.numeroPedido || pedido.id}</strong>
-                          <span>Proveedor: {pedido.proveedorNombre || pedido.proveedor}</span>
+                          <strong>Pedido #{pedido.numeroPedido || pedido.codigo || pedido._id}</strong>
+                          <div className={styles.orderMeta}>
+                            <span className={styles.orderVendorName}>
+                              {obtenerNombreProveedor(pedido)}
+                            </span>
+                          </div>
                         </div>
                         <div className={styles.orderDetails}>
-                          <span>{pedido.fecha} — {pedido.horario}</span>
-                          <span className={styles.statusBadge}>Programado</span>
+                          <span className={styles.orderDateText}>
+                            {obtenerFechaFormateada(pedido)}
+                          </span>
+                          <span className={styles.statusBadge}>
+                            {pedido.estado || 'PROGRAMADO'}
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.9rem' }}>
-                    No hay actividad reciente. Los pedidos que agendes aparecerán aquí.
+                  <p className={styles.orderMeta}>
+                    No hay actividad reciente. Los pedidos que se agenden aparecerán aquí.
                   </p>
                 )}
               </div>
@@ -246,6 +306,61 @@ export default function Dashboard() {
           />
         )}
       </section>
+
+      {/* Modal Emergente con la lista completa de pedidos */}
+      {mostrarModalTodos && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3>Todos los pedidos programados</h3>
+                <p>Total de registros: {pedidos.length}</p>
+              </div>
+              <button
+                className={styles.closeButton}
+                onClick={() => setMostrarModalTodos(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.modalList}>
+                {pedidos.map((pedido) => (
+                  <div key={pedido.id || pedido._id} className={styles.modalCard}>
+                    <div>
+                      <strong className={styles.modalCardTitle}>
+                        Pedido #{pedido.numeroPedido || pedido.codigo || pedido._id}
+                      </strong>
+                      <div className={styles.modalCardSub}>
+                        <span className={styles.orderVendorName}>{obtenerNombreProveedor(pedido)}</span>
+                      </div>
+                      <div className={styles.modalCardDate}>
+                        {obtenerFechaFormateada(pedido)}
+                      </div>
+                    </div>
+
+                    <span className={styles.modalBadge}>
+                      {pedido.estado || 'PROGRAMADO'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }}
+                onClick={() => setMostrarModalTodos(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
