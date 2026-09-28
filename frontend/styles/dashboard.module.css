@@ -6,7 +6,8 @@
     padding: 32px 0 64px;
     animation: aparecer 0.5s ease both;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    text-align: center; /* Mantiene centrado el menú de pestañas */
+    text-align: center;
+    /* Mantiene centrado el menú de pestañas */
 }
 
 /* Header principal original: Título a la izquierda y botones a la derecha */
@@ -119,7 +120,8 @@
 }
 
 .heroCard {
-    display: block; /* Permite que el título quede arriba y la lista de pedidos abajo */
+    display: block;
+    /* Permite que el título quede arriba y la lista de pedidos abajo */
     margin-bottom: 24px;
     padding: 24px 32px;
     border: 1px solid rgba(255, 255, 255, 0.8);
@@ -311,7 +313,7 @@
     background: #f8fafc;
 }
 
-.orderItem > div:first-child {
+.orderItem>div:first-child {
     display: grid;
     gap: 5px;
 }
@@ -439,6 +441,7 @@
         opacity: 0;
         transform: translateY(18px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -464,6 +467,7 @@
 }
 
 @media (max-width: 560px) {
+
     .heroCard,
     .formCard,
     .ordersCard,
@@ -485,4 +489,182 @@
     .primaryButton {
         width: 100%;
     }
+}
+
+/* Media query limpia y responsiva para móviles (360px - 480px) */
+@media (max-width: 480px) {
+    .dashboard {
+        width: 100% !important;
+        padding: 16px 8px !important;
+    }
+
+    .dashboardHeader {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    /* Convierte la barra de navegación en un scroll horizontal en móviles */
+    .navigation {
+        display: flex !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        box-sizing: border-box !important;
+        justify-content: flex-start !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .heroCard,
+    .formCard,
+    .ordersCard,
+    .restrictedCard {
+        padding: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* Subtítulos e información adicional dentro de las tarjetitas */
+.orderMeta {
+    color: #64748b;
+    font-size: 0.88rem;
+    margin-top: 2px;
+}
+
+.orderVendorName {
+    color: #334155;
+    font-weight: 500;
+}
+
+.orderDateText {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+/* Modal Emergente (Ver todos) */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modalContent {
+    background-color: #ffffff;
+    border-radius: 16px;
+    max-width: 650px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modalHeader {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+}
+
+.modalHeader p {
+    margin: 2px 0 0 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.modalBody {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modalList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modalCard {
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modalCardTitle {
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.modalCardSub {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.modalCardDate {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.modalBadge {
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.modalprimaryButton {
+    background-color: #ef4444;
+    color: #ffffff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.modalPrimaryButton:hover {
+    background-color: #dc2626;
 }
