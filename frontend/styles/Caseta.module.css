@@ -1,173 +1,173 @@
-/* Contenedor principal */
-.pageWrapper {
-    position: relative;
-    width: 100%;
+/* styles/Caseta.module.css */
+
+.container {
     min-height: 100vh;
-    background-color: #064e3b;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 24px 16px;
-    box-sizing: border-box;
-}
-
-/* Posición del botón arriba a la izquierda */
-.topNav {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 10;
-}
-
-/* Estilo para celular */
-.backBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #a7f3d0;
-    text-decoration: none;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.backBtn:hover {
-    background: rgba(255, 255, 255, 0.25);
+    padding: 2rem;
     color: #ffffff;
-}
-
-/* Contenedor centrado */
-.casetaContainer {
-    width: 100%;
-    max-width: 380px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 0.3s ease;
 }
 
 .header {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto 2.5rem auto;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1rem;
 }
 
-.header h2 {
-    font-size: 1.6rem;
-    margin: 0;
-    color: #ffffff;
+.header h1 {
+    font-size: 1.75rem;
     font-weight: 700;
-    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
 }
 
-.header p {
-    font-size: 0.85rem;
-    color: #a7f3d0;
-    margin-top: 4px;
-    font-weight: 500;
+.linkButton {
+    color: #ffffff;
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
 }
 
-/* Tarjeta del formulario */
+.linkButton:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    background-color: #ffffff;
+    color: #1f2937;
+    padding: 2.5rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    text-align: center;
+    color: #111827;
+}
+
 .form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    background: #ffffff;
-    padding: 24px 20px;
-    border-radius: 16px;
-    box-shadow: 0 16px 35px rgba(0, 0, 0, 0.25);
-    text-align: left;
+    gap: 1.25rem;
 }
 
 .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.5rem;
 }
 
 .field label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #374151;
 }
 
 .field input {
-    height: 44px;
-    padding: 0 12px;
-    border: 1.5px solid #cbd5e1;
+    padding: 0.8rem 1rem;
+    border: 2px solid #d1d5db;
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     outline: none;
-    box-sizing: border-box;
-    width: 100%;
+    transition: border-color 0.2s ease;
 }
 
 .field input:focus {
-    border-color: #047857;
-    box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.2);
+    border-color: #3b82f6;
 }
 
 .submitBtn {
-    height: 44px;
-    background: #047857;
-    color: white;
+    color: #ffffff;
+    padding: 0.9rem;
     border: none;
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+    margin-top: 0.5rem;
 }
 
-.submitBtn:hover {
-    background: #065f46;
+.submitBtn:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-.errorCard {
-    padding: 12px;
-    background: #fee2e2;
-    border: 1px solid #f87171;
-    color: #991b1b;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    text-align: center;
+.submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.resultCard {
-    padding: 18px;
-    border-radius: 12px;
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+/* Modal Estilos */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background-color: #ffffff;
+    color: #1f2937;
+    padding: 2rem;
+    border-radius: 14px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
     text-align: left;
 }
 
-/* Estilos para pantallas medianas y grandes */
-@media (min-width: 768px) {
-    .topNav {
-        top: 24px;
-        left: 24px;
-    }
+.modalContent h3 {
+    margin-top: 0;
+    color: #111827;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
 
-    .backBtn {
-        font-size: 0.9rem;
-        padding: 10px 18px;
-        border-radius: 10px;
-    }
+.modalContent p {
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+}
 
-    .casetaContainer {
-        max-width: 420px;
-    }
+.closeBtn {
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1.25rem;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
 
-    .header h2 {
-        font-size: 1.8rem;
-    }
-
-    .form {
-        padding: 32px 28px;
-    }
+.closeBtn:hover {
+    opacity: 0.9;
 }

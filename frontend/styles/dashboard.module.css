@@ -7,10 +7,9 @@
     animation: aparecer 0.5s ease both;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     text-align: center;
-    /* Mantiene centrado el menú de pestañas */
 }
 
-/* Header principal original: Título a la izquierda y botones a la derecha */
+/* Header principal */
 .dashboardHeader {
     display: flex;
     align-items: center;
@@ -47,7 +46,6 @@
     opacity: 0.75;
 }
 
-/* Botones del header alineados a la derecha */
 .headerActions {
     display: flex;
     align-items: center;
@@ -66,7 +64,7 @@
     letter-spacing: 0.08em;
 }
 
-/* Pestañas de navegación flotante centrada */
+/* Pestañas de navegación */
 .navigation {
     display: inline-flex;
     gap: 6px;
@@ -119,18 +117,6 @@
     text-align: left;
 }
 
-.heroCard {
-    display: block;
-    /* Permite que el título quede arriba y la lista de pedidos abajo */
-    margin-bottom: 24px;
-    padding: 24px 32px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25);
-    text-align: left;
-}
-
 .heroCard h2,
 .formHeading h2,
 .sectionHeading h2,
@@ -147,13 +133,12 @@
     color: #64748b;
 }
 
-/* Ocultar los emojis cuadrados de las cabeceras */
 .heroIcon,
 .formIcon {
     display: none !important;
 }
 
-/* Encabezados internos centrados para Registrar Proveedor y Agendar Pedido */
+/* Encabezados de formulario */
 .formHeadingCentrado,
 .formHeading {
     text-align: center;
@@ -184,6 +169,7 @@
     margin-bottom: 24px;
 }
 
+/* Formularios y Grillas */
 .form {
     display: grid;
     gap: 24px;
@@ -198,6 +184,7 @@
 .field {
     display: grid;
     gap: 8px;
+    text-align: left;
 }
 
 .field label {
@@ -222,7 +209,6 @@
     transition: 0.2s ease;
 }
 
-/* Focus verde coordinado */
 .field input:focus,
 .field select:focus {
     border-color: #059669;
@@ -235,7 +221,7 @@
     font-size: 0.78rem;
 }
 
-/* Botones del Formulario */
+/* Botones */
 .primaryButton,
 .secondaryButton,
 .alternativeButton {
@@ -274,7 +260,7 @@
     color: #1d4ed8;
 }
 
-/* Mensajes de feedback */
+/* Feedback */
 .successMessage,
 .errorMessage {
     margin-bottom: 22px;
@@ -296,7 +282,7 @@
     color: #991b1b;
 }
 
-/* Lista de pedidos */
+/* Listas de Pedidos */
 .ordersList {
     display: grid;
     gap: 12px;
@@ -311,6 +297,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 16px;
     background: #f8fafc;
+    text-align: left;
 }
 
 .orderItem>div:first-child {
@@ -357,7 +344,7 @@
     margin: 0;
 }
 
-/* Tarjeta de alternativas de horarios (RN-02) */
+/* Alternativas de horarios */
 .alternativesCard {
     margin-top: 24px;
     padding: 24px;
@@ -430,101 +417,6 @@
     animation: girar 0.8s linear infinite;
 }
 
-@keyframes girar {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes aparecer {
-    from {
-        opacity: 0;
-        transform: translateY(18px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Responsivo */
-@media (max-width: 800px) {
-    .dashboardHeader {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .headerActions {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .formGrid,
-    .alternativesList {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 560px) {
-
-    .heroCard,
-    .formCard,
-    .ordersCard,
-    .restrictedCard {
-        padding: 20px 16px;
-        border-radius: 18px;
-    }
-
-    .orderItem {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .orderDetails {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .primaryButton {
-        width: 100%;
-    }
-}
-
-/* Media query limpia y responsiva para móviles (360px - 480px) */
-@media (max-width: 480px) {
-    .dashboard {
-        width: 100% !important;
-        padding: 16px 8px !important;
-    }
-
-    .dashboardHeader {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 12px !important;
-    }
-
-    /* Convierte la barra de navegación en un scroll horizontal en móviles */
-    .navigation {
-        display: flex !important;
-        width: 100% !important;
-        overflow-x: auto !important;
-        box-sizing: border-box !important;
-        justify-content: flex-start !important;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .heroCard,
-    .formCard,
-    .ordersCard,
-    .restrictedCard {
-        padding: 16px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-}
-
-/* Subtítulos e información adicional dentro de las tarjetitas */
 .orderMeta {
     color: #64748b;
     font-size: 0.88rem;
@@ -541,7 +433,7 @@
     color: #64748b;
 }
 
-/* Modal Emergente (Ver todos) */
+/* Modal */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -567,6 +459,7 @@
     flex-direction: column;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     overflow: hidden;
+    text-align: left;
 }
 
 .modalHeader {
@@ -653,18 +546,117 @@
     border-top: 1px solid #e2e8f0;
 }
 
-.modalprimaryButton {
-    background-color: #ef4444;
-    color: #ffffff;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.2s ease;
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-.modalPrimaryButton:hover {
-    background-color: #dc2626;
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsivo */
+@media (max-width: 800px) {
+    .dashboardHeader {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .headerActions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .formGrid,
+    .alternativesList {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+
+    .heroCard,
+    .formCard,
+    .ordersCard,
+    .restrictedCard {
+        padding: 20px 16px;
+        border-radius: 18px;
+    }
+
+    .orderItem {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .orderDetails {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .primaryButton {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard {
+        width: 100% !important;
+        padding: 16px 8px !important;
+    }
+
+    .dashboardHeader {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .navigation {
+        display: flex !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        box-sizing: border-box !important;
+        justify-content: flex-start !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .heroCard,
+    .formCard,
+    .ordersCard,
+    .restrictedCard {
+        padding: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
+.mainContent {
+    min-height: 100vh;
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease, max-width 0.3s ease;
+    margin-left: 250px;
+    max-width: calc(100% - 250px);
+}
+
+.mainContent[data-colapsado="true"] {
+    margin-left: 72px;
+    max-width: calc(100% - 72px);
+}
+
+@media (max-width: 768px) {
+
+    .mainContent,
+    .mainContent[data-colapsado="true"] {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+        padding: 1rem !important;
+    }
 }
