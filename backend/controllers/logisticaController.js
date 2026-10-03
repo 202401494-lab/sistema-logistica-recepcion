@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Proveedor = require('../models/Proveedor');
 const Pedido = require('../models/Pedido');
+const generarNumeroPedido = require('../services/numeroPedido');
 const { clasificarLlegada, obtenerFechaLlegada } = require('../services/clasificacionLlegada');
 
 // RN-02: la operación funciona de 07:00 a 17:00, de lunes a sábado.
@@ -136,17 +137,20 @@ const listarProveedores = async (req, res) => {
 
 const crearPedido = async (req, res) => {
   try {
+    const datos = req.body && typeof req.body === 'object' ? req.body : {};
     const {
-      numeroPedido,
       proveedorId,
       tipoProducto,
       fechaHoraProgramada,
       inicioVentana,
       finVentana,
       duracionEstimadaMinutos,
-    } = req.body;
+    } = datos;
 
-    if (!numeroPedido || !proveedorId || !tipoProducto || !fechaHoraProgramada
+    if (Object.hasOwn(datos, 'numeroPedido')) {
+      return res.status(400).json({ mensaje: 'El numeroPedido es generado automáticamente por el sistema' });
+    }
+    if (!proveedorId || !tipoProducto || !fechaHoraProgramada
       || !inicioVentana || !finVentana || duracionEstimadaMinutos === undefined) {
       return res.status(400).json({ mensaje: 'Todos los campos del pedido son obligatorios' });
     }
@@ -177,11 +181,6 @@ const crearPedido = async (req, res) => {
     const errorVentana = await validarVentanaPedido({ inicio, fin, programada, duracion });
     if (typeof errorVentana === 'string') return res.status(400).json({ mensaje: errorVentana });
 
-    const pedidoExistente = await Pedido.findOne({ numeroPedido: String(numeroPedido).trim() });
-    if (pedidoExistente) {
-      return res.status(409).json({ mensaje: 'El numeroPedido ya está registrado' });
-    }
-
     if (errorVentana?.solapado) {
       const alternativas = await obtenerAlternativas(inicio, duracion);
       return res.status(409).json({
@@ -190,9 +189,10 @@ const crearPedido = async (req, res) => {
       });
     }
 
+    const numeroPedido = await generarNumeroPedido();
     const pedido = await Pedido.create({
-      ...req.body,
-      numeroPedido: String(numeroPedido).trim(),
+      ...datos,
+      numeroPedido,
       proveedorId,
       fechaHoraProgramada: programada,
       inicioVentana: inicio,
@@ -210,6 +210,7 @@ const crearPedido = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({ mensaje: 'Los datos del pedido no son válidos', detalle: error.message });
     }
+    if (error.status) return res.status(error.status).json({ mensaje: error.message });
     console.error(error);
     return res.status(500).json({ mensaje: 'Error interno del servidor' });
   }

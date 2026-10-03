@@ -16,7 +16,7 @@ const auditoriaSoftDelete = (schema) => {
   // Asigna fechas y usuario en cada alta o modificación hecha con save().
   schema.pre('save', function antesDeGuardar(next) {
     const ahora = new Date();
-    const usuario = this.$__.saveOptions?.usuarioActualizacion || 'sistema';
+    const usuario = this.$__.saveOptions?.usuarioActualizacion || this.usuarioActualizacion || 'sistema';
     if (this.isNew) {
       this.fechaCreacion = ahora;
       this.usuarioCreacion = usuario;

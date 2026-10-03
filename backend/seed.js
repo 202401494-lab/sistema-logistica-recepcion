@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Role = require('./models/Role');
 const Usuario = require('./models/Usuario');
+const Gateway = require('./models/Gateway');
 
 const rolesData = [
   { nombre: 'administrador', descripcion: 'Control total del sistema' },
@@ -44,6 +45,22 @@ const seed = async () => {
       estado: 'activo',
     });
     console.log(`Usuario creado -> email: ${u.email} | password: ${u.passwordPlano}`);
+  }
+
+  for (const numeroGateway of [1, 2, 3, 4, 5]) {
+    await Gateway.updateOne(
+      { numeroGateway },
+      {
+        $setOnInsert: {
+          numeroGateway,
+          tipoCargaPermitida: numeroGateway === 5 ? 'construcción' : 'general',
+          estado: 'LIBRE',
+          usuarioCreacion: 'sistema',
+          usuarioActualizacion: 'sistema',
+        },
+      },
+      { upsert: true },
+    );
   }
 
   console.log('Seed completado');

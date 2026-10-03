@@ -2,7 +2,27 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Pedido = require('../models/Pedido');
-const { registrarLlegada } = require('../controllers/logisticaController');
+const { registrarLlegada, crearPedido } = require('../controllers/logisticaController');
+
+test('rechaza un numeroPedido enviado manualmente', async () => {
+  const respuesta = {
+    statusCode: null,
+    body: null,
+    status(codigo) {
+      this.statusCode = codigo;
+      return this;
+    },
+    json(contenido) {
+      this.body = contenido;
+      return this;
+    },
+  };
+
+  await crearPedido({ body: { numeroPedido: 'PED-MANUAL-001' } }, respuesta);
+
+  assert.equal(respuesta.statusCode, 400);
+  assert.match(respuesta.body.mensaje, /generado automáticamente/);
+});
 
 test('rechaza una hora de llegada futura antes de consultar el pedido', async (t) => {
   const findOneOriginal = Pedido.findOne;

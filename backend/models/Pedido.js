@@ -3,7 +3,7 @@ const auditoriaSoftDelete = require('../plugins/auditoriaSoftDelete');
 
 const pedidoSchema = new mongoose.Schema(
   {
-    numeroPedido: { type: String, required: true, unique: true, trim: true },
+    numeroPedido: { type: String, required: true, unique: true, immutable: true, trim: true },
     proveedorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Proveedor',
@@ -27,7 +27,10 @@ const pedidoSchema = new mongoose.Schema(
     duracionEstimadaMinutos: { type: Number, required: true, min: 1 },
     estado: {
       type: String,
-      enum: ['PROGRAMADO', 'CANCELADO', 'ATENDIDO'],
+      enum: [
+        'PROGRAMADO', 'A TIEMPO', 'ANTICIPADO', 'TARDÍO', 'AUSENTE',
+        'EN COLA', 'DESCARGANDO', 'FINALIZADO', 'CANCELADO',
+      ],
       default: 'PROGRAMADO',
     },
   },
