@@ -1,0 +1,157 @@
+.container {
+    width: 100%;
+    padding: 1rem 0;
+}
+
+.titulo {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.card {
+    min-width: 0;
+    border-radius: 12px;
+    padding: 1.2rem;
+    color: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.tarjetaLibre {
+    background: linear-gradient(145deg, #bfdbfe 0%, #93c5fd 100%);
+}
+
+.tarjetaOcupado {
+    background: linear-gradient(145deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.tarjetaFueraServicio {
+    background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+/* Header con flex-direction column para que la badge quede DEBAJO del título */
+.cardHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    text-align: center;
+}
+
+.cardHeader h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.badgeEstado {
+    font-size: 0.65rem;
+    font-weight: bold;
+    background: rgba(30, 58, 138, 0.14);
+    color: #1e3a8a;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tarjetaOcupado .badgeEstado {
+    background: #fef08a;
+    color: #713f12;
+}
+
+.tarjetaFueraServicio .badgeEstado {
+    background: rgba(51, 65, 85, 0.12);
+    color: #334155;
+}
+
+.cardBody {
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+    text-align: center;
+}
+
+.infoDescarga {
+    margin-top: 0.5rem;
+    background: rgba(255, 255, 255, 0.55);
+    padding: 0.4rem;
+    border-radius: 6px;
+}
+
+.cardActions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.btnIniciar,
+.btnFinalizar,
+.btnMantenimiento,
+.btnHabilitar {
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: opacity 0.2s ease;
+}
+
+.btnIniciar {
+    background: #ffffff;
+    color: #1e3a8a;
+}
+
+.btnFinalizar {
+    background: #ffffff;
+    color: #991b1b;
+}
+
+.btnMantenimiento {
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.btnHabilitar {
+    background: #ffffff;
+    color: #374151;
+}
+
+.btnIniciar:hover,
+.btnFinalizar:hover,
+.btnMantenimiento:hover,
+.btnHabilitar:hover {
+    opacity: 0.9;
+}
+
+.loading {
+    color: #ffffff;
+    text-align: center;
+    padding: 2rem;
+}
+
+.error {
+    color: #f87171;
+    text-align: center;
+    margin-bottom: 1rem;
+}

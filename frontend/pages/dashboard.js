@@ -7,6 +7,7 @@ import PedidoForm from '../components/PedidoForm';
 import PedidoList from '../components/PedidoList';
 import ResumenPedidosCard from '../components/ResumenPedidosCard';
 import ModalTodosPedidos from '../components/ModalTodosPedidos';
+import TableroGateways from '../components/TableroGateways'; // <-- IMPORTACIÓN AGREGADA
 import Sidebar from '../components/Sidebar';
 import { obtenerPedidos, obtenerProveedores } from '../lib/api';
 import styles from '../styles/dashboard.module.css';
@@ -176,6 +177,15 @@ export default function Dashboard() {
             <PedidoForm
               proveedores={proveedores}
               onPedidoCreado={manejarPedidoCreado}
+            />
+          )}
+
+          {/* Tablero de Gateways */}
+          {seccionActiva === 'gateways' && (
+            <TableroGateways
+              pedidosEnCola={pedidos}
+              onActualizarDatos={cargarPedidos}
+              esAdmin={rol === 'administrador'}
             />
           )}
         </section>

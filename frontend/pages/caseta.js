@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '../styles/Caseta.module.css';
 
+const API_BASE_URL = 'http://localhost:4000/api';
+
 const COLOR_ROL = {
     administrador: { bg: '#0b192c', btn: '#1e3a8a', accent: '#3b82f6' },
     coordinador: { bg: '#064e3b', btn: '#047857', accent: '#10b981' },
@@ -45,7 +47,8 @@ export default function Caseta() {
             // Si no es un ObjectId de 24 caracteres, buscamos el pedido por su código
             const esObjectId = /^[0-9a-fA-F]{24}$/.test(targetId);
             if (!esObjectId) {
-                const resList = await fetch('/api/pedidos', {
+                // CORREGIDO: Apunta a http://localhost:4000/api/pedidos
+                const resList = await fetch(`${API_BASE_URL}/pedidos`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
@@ -67,11 +70,13 @@ export default function Caseta() {
                         setCargando(false);
                         return;
                     }
+                } else {
+                    throw new Error('Error al consultar lista de pedidos');
                 }
             }
 
-            // Enviar la hora de llegada efectiva
-            const res = await fetch(`/api/pedidos/${targetId}/llegada`, {
+            // CORREGIDO: Apunta a http://localhost:4000/api/pedidos/:id/llegada
+            const res = await fetch(`${API_BASE_URL}/pedidos/${targetId}/llegada`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -86,7 +91,7 @@ export default function Caseta() {
                 setModalInfo(data);
                 setCodigoInput('');
             } else {
-                alert(data.message || 'Error al registrar la llegada.');
+                alert(data.mensaje || data.message || 'Error al registrar la llegada.');
             }
         } catch (error) {
             console.error('Error al registrar llegada:', error);

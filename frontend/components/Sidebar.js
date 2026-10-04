@@ -54,7 +54,8 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                 </div>
 
                 <nav className={styles.menu}>
-                    {rol === 'coordinador' && (
+                    {/* HABILITADO PARA COORDINADOR Y ADMINISTRADOR */}
+                    {(rol === 'coordinador' || rol === 'administrador') && (
                         <>
                             <button
                                 type="button"
@@ -101,6 +102,19 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                 <span className={styles.icon}>📅</span>
                                 {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
                                     <span className={styles.label}>Agendar pedido</span>
+                                )}
+                            </button>
+
+                            {/* Tablero de Gateways */}
+                            <button
+                                type="button"
+                                className={seccionActiva === 'gateways' ? styles.itemActivo : styles.item}
+                                style={seccionActiva === 'gateways' ? { color: estiloActual.colorTextoActivo } : {}}
+                                onClick={() => { setSeccionActiva('gateways'); cerrarEnMovil(); }}
+                            >
+                                <span className={styles.icon}>🚛</span>
+                                {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
+                                    <span className={styles.label}>Gateways</span>
                                 )}
                             </button>
                         </>
