@@ -1,34 +1,29 @@
-/* Fondo oscuro translúcido para oscurecer la pantalla */
 .overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    box-sizing: border-box;
-    padding: 1rem;
-    overflow-y: auto;
 }
 
-/* Tarjeta del modal con fondo blanco y bordes definidos */
-.modal {
+.modalCard {
     background: #ffffff;
     border-radius: 16px;
     padding: 2rem;
-    width: min(440px, 100%);
-    max-width: 440px;
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-    box-sizing: border-box;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
     color: #1f2937;
-    animation: aparecer 0.2s ease-out;
+    animation: fadeIn 0.2s ease-out;
 }
 
-@keyframes aparecer {
+@keyframes fadeIn {
     from {
         opacity: 0;
         transform: scale(0.95);
@@ -40,58 +35,58 @@
     }
 }
 
-.modal h3 {
+.titulo {
     margin: 0 0 0.5rem 0;
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: #111827;
     text-align: center;
 }
 
-.modal p {
+.subtitulo {
     margin: 0 0 1.25rem 0;
     font-size: 0.9rem;
-    color: #4b5563;
+    color: #6b7280;
     text-align: center;
 }
 
-.modal form {
+.formGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
-.modal label {
+.label {
     font-size: 0.85rem;
     font-weight: 600;
     color: #374151;
 }
 
-.modal select {
+.select {
     width: 100%;
     padding: 0.75rem;
     border-radius: 8px;
     border: 1px solid #d1d5db;
     background-color: #f9fafb;
     color: #111827;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     outline: none;
-    box-sizing: border-box;
+    transition: border-color 0.2s;
 }
 
-.modal select:focus {
-    border-color: #3b82f6;
+.select:focus {
+    border-color: #10b981;
     background-color: #ffffff;
 }
 
-.actions {
+.acciones {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
-    margin-top: 1rem;
 }
 
-.actions button[type="button"] {
+.btnCancelar {
     background: #f3f4f6;
     color: #374151;
     border: none;
@@ -102,12 +97,12 @@
     transition: background 0.2s;
 }
 
-.actions button[type="button"]:hover {
+.btnCancelar:hover {
     background: #e5e7eb;
 }
 
-.actions button[type="submit"] {
-    background: #1d4ed8;
+.btnConfirmar {
+    background: #10b981;
     color: #ffffff;
     border: none;
     padding: 0.65rem 1.2rem;
@@ -117,28 +112,18 @@
     transition: background 0.2s;
 }
 
-.actions button[type="submit"]:hover {
-    background: #1e3a8a;
+.btnConfirmar:hover {
+    background: #059669;
 }
 
-.actions button:disabled {
-    background: #9ca3af !important;
+.btnConfirmar:disabled {
+    background: #9ca3af;
     cursor: not-allowed;
-    opacity: 0.7;
 }
 
 .error {
-    color: #ef4444 !important;
+    color: #ef4444;
     font-size: 0.85rem;
-    margin-bottom: 0.5rem;
-    text-align: center;
-}
-
-.warning {
-    color: #d97706 !important;
-    font-size: 0.8rem;
-    background: #fef3c7;
-    padding: 0.5rem;
-    border-radius: 6px;
     margin-top: 0.5rem;
+    text-align: center;
 }

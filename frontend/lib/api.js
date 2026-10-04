@@ -121,3 +121,42 @@ export const cancelarPedido = async (id) => {
 
     return procesarRespuesta(respuesta);
 };
+
+/* Gateways */
+export async function obtenerGateways() {
+    const res = await fetch(`${API_BASE_URL}/gateways`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(res);
+}
+
+/* Cambia el estado de un gateway (activo/inactivo) */
+export async function actualizarGateway(id, datosGateway) {
+    const res = await fetch(`${API_BASE_URL}/gateways/${id}`, {
+        method: 'PUT',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datosGateway),
+    });
+    return procesarRespuesta(res);
+}
+
+/* Transacciones de Descarga */
+export async function iniciarDescarga(pedidoId, gatewayId) {
+    const res = await fetch(`${API_BASE_URL}/descargas/iniciar`, {
+        method: 'POST',
+        headers: obtenerHeaders(),
+        body: JSON.stringify({ pedidoId, gatewayId }),
+    });
+    return procesarRespuesta(res);
+}
+
+/* Finaliza una descarga y actualiza su estado en el servidor */
+export async function finalizarDescarga(descargasId) {
+    const res = await fetch(`${API_BASE_URL}/descargas/finalizar`, {
+        method: 'POST',
+        headers: obtenerHeaders(),
+        body: JSON.stringify({ descargasId }),
+    });
+    return procesarRespuesta(res);
+}

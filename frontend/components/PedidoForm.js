@@ -7,9 +7,8 @@ import {
 import AlternativeWindows from './AlternativeWindows';
 import styles from '../styles/dashboard.module.css';
 
-/* Formulario para agendar un nuevo pedido */
+/* Formulario para agendar un nuevo pedido (el numeroPedido es autogenerado por el backend) */
 const formularioInicial = {
-    numeroPedido: '',
     proveedorId: '',
     tipoProducto: '',
     fechaHoraProgramada: '',
@@ -80,10 +79,9 @@ export default function PedidoForm({
 
         setCargando(true);
 
-        /* Intento de crear el pedido en el backend */
+        /* Intento de crear el pedido en el backend (sin numeroPedido manual) */
         try {
             const pedidoCreado = await crearPedido({
-                numeroPedido: formulario.numeroPedido.trim(),
                 proveedorId: formulario.proveedorId,
                 tipoProducto: formulario.tipoProducto,
                 fechaHoraProgramada: convertirAISO(
@@ -127,6 +125,7 @@ export default function PedidoForm({
             'Alternativa seleccionada. Revisa los datos y vuelve a enviar.',
         );
     };
+
     /* Renderiza el formulario de agendar pedido con validaciones y manejo de estado */
     return (
         <section className={styles.formCard}>
@@ -153,17 +152,6 @@ export default function PedidoForm({
             {/* Renderiza el formulario de agendar pedido con campos y validaciones */}
             <form className={styles.form} onSubmit={manejarEnvio}>
                 <div className={styles.formGrid}>
-                    <div className={styles.field}>
-                        <label htmlFor="numeroPedido">Número de pedido</label>
-                        <input
-                            id="numeroPedido"
-                            name="numeroPedido"
-                            value={formulario.numeroPedido}
-                            onChange={manejarCambio}
-                            placeholder="Ej. PED-001"
-                            required
-                        />
-                    </div>
 
                     {/* Campo de selección de proveedor con validación de existencia */}
                     <div className={styles.field}>
