@@ -13,6 +13,7 @@ const protectedRoutes = require('./routes/protectedRoutes');
 const logisticaRoutes = require('./routes/logisticaRoutes');
 const parametroRoutes = require('./routes/parametroRoutes');
 const gatewaysRoutes = require('./routes/gatewaysRoutes');
+const kpisRoutes = require('./routes/kpisRoutes');
 const actualizarEstadosLlegadas = require('./services/llegadasScheduler');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', logisticaRoutes);
 app.use('/api/parametros', parametroRoutes);
 app.use('/api', gatewaysRoutes);
+app.use('/api', kpisRoutes);
 
 // ------------------------------------------------------------
 // RUTAS PROTEGIDAS

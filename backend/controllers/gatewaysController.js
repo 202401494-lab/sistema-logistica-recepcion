@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const Descarga = require('../models/Descarga');
 const Gateway = require('../models/Gateway');
 const Pedido = require('../models/Pedido');
+const registrarEvento = require('../services/auditoriaEventos');
+const ejecutarTransaccion = require('../services/transaccionMongo');
+const reevaluarCola = require('../services/reevaluarCola');
 
 const nombreUsuario = (req) => req.usuario?.nombreCompleto
   || req.usuario?.email
@@ -111,11 +114,31 @@ const actualizarGateway = async (req, res) => {
     if (errorValidacion) return res.status(400).json({ mensaje: errorValidacion });
     if (cambios.numeroGateway !== undefined) cambios.numeroGateway = numeroFinal;
 
-    const gateway = await Gateway.findOneAndUpdate(
-      { _id: req.params.id, activo: true, estado: gatewayActual.estado },
-      { $set: { ...cambios, usuarioActualizacion: nombreUsuario(req) } },
-      { new: true, runValidators: true, usuarioActualizacion: nombreUsuario(req) },
-    );
+    const esCambioMantenimiento = cambios.estado !== undefined
+      && cambios.estado !== gatewayActual.estado
+      && (cambios.estado === 'FUERA DE SERVICIO' || gatewayActual.estado === 'FUERA DE SERVICIO');
+    const usuario = nombreUsuario(req);
+    const usuarioId = req.usuario?.id;
+    if (esCambioMantenimiento && !mongoose.isValidObjectId(usuarioId)) {
+      return res.status(401).json({ mensaje: 'No se pudo identificar al usuario autenticado' });
+    }
+    let gateway;
+    await ejecutarTransaccion(async (session) => {
+      gateway = await Gateway.findOneAndUpdate(
+        { _id: req.params.id, activo: true, estado: gatewayActual.estado },
+        { $set: { ...cambios, usuarioActualizacion: usuario } },
+        { new: true, runValidators: true, session, usuarioActualizacion: usuario },
+      );
+      if (gateway && esCambioMantenimiento) {
+        await registrarEvento({
+          usuarioId,
+          usuarioCreacion: usuario,
+          accion: 'GATEWAY_MANTENIMIENTO',
+          detalles: { gatewayId: gateway._id, estadoAnterior: gatewayActual.estado, estadoNuevo: gateway.estado },
+          session,
+        });
+      }
+    });
     if (!gateway) {
       const estadoActual = await Gateway.findOne({ _id: req.params.id, activo: true });
       if (!estadoActual) return res.status(404).json({ mensaje: 'Gateway no encontrado' });
@@ -162,8 +185,6 @@ const inactivarGateway = async (req, res) => {
 };
 
 const iniciarDescarga = async (req, res) => {
-  let gatewayOcupado;
-  let pedidoDescargando;
   try {
     const { pedidoId, gatewayId } = req.body || {};
     if (!mongoose.isValidObjectId(pedidoId) || !mongoose.isValidObjectId(gatewayId)) {
@@ -193,55 +214,50 @@ const iniciarDescarga = async (req, res) => {
     }
 
     const usuario = nombreUsuario(req);
-    gatewayOcupado = await Gateway.findOneAndUpdate(
-      { _id: gatewayId, activo: true, estado: 'LIBRE' },
-      { $set: { estado: 'OCUPADO', usuarioActualizacion: usuario } },
-      { new: true, usuarioActualizacion: usuario },
-    );
-    if (!gatewayOcupado) {
-      return res.status(409).json({ mensaje: 'El gateway dejó de estar libre; actualice e intente nuevamente' });
-    }
-
-    pedidoDescargando = await Pedido.findOneAndUpdate(
-      { _id: pedidoId, activo: true, estado: { $nin: ['DESCARGANDO', 'FINALIZADO', 'CANCELADO', 'AUSENTE'] } },
-      { $set: { estado: 'DESCARGANDO', usuarioActualizacion: usuario } },
-      { new: true, usuarioActualizacion: usuario },
-    );
-    if (!pedidoDescargando) {
-      await Gateway.findOneAndUpdate(
-        { _id: gatewayId, estado: 'OCUPADO' },
-        { $set: { estado: 'LIBRE', usuarioActualizacion: usuario } },
-        { usuarioActualizacion: usuario },
+    let descarga;
+    await ejecutarTransaccion(async (session) => {
+      const gatewayOcupado = await Gateway.findOneAndUpdate(
+        { _id: gatewayId, activo: true, estado: 'LIBRE' },
+        { $set: { estado: 'OCUPADO', usuarioActualizacion: usuario } },
+        { new: true, session, usuarioActualizacion: usuario },
       );
-      gatewayOcupado = null;
-      return res.status(409).json({ mensaje: 'El pedido dejó de estar disponible; actualice e intente nuevamente' });
-    }
+      if (!gatewayOcupado) throw Object.assign(new Error('El gateway dejó de estar libre; actualice e intente nuevamente'), { status: 409 });
 
-    const descarga = await Descarga.create({
-      gatewayId,
-      pedidoId,
-      operadorId,
-      fechaHoraInicio: new Date(),
-      usuarioCreacion: usuario,
-      usuarioActualizacion: usuario,
+      const pedidoDescargando = await Pedido.findOneAndUpdate(
+        { _id: pedidoId, activo: true, estado: { $nin: ['DESCARGANDO', 'FINALIZADO', 'CANCELADO', 'AUSENTE'] } },
+        { $set: { estado: 'DESCARGANDO', usuarioActualizacion: usuario } },
+        { new: true, session, usuarioActualizacion: usuario },
+      );
+      if (!pedidoDescargando) throw Object.assign(new Error('El pedido dejó de estar disponible; actualice e intente nuevamente'), { status: 409 });
+
+      [descarga] = await Descarga.create([{
+        gatewayId,
+        pedidoId,
+        operadorId,
+        fechaHoraInicio: new Date(),
+        usuarioCreacion: usuario,
+        usuarioActualizacion: usuario,
+      }], { session });
+      await registrarEvento({
+        usuarioId: operadorId,
+        usuarioCreacion: usuario,
+        accion: 'GATEWAY_ASIGNADO',
+        pedidoId,
+        detalles: { gatewayId },
+        session,
+      });
+      await registrarEvento({
+        usuarioId: operadorId,
+        usuarioCreacion: usuario,
+        accion: 'DESCARGADA_INICIADA',
+        pedidoId,
+        detalles: { gatewayId, descargaId: descarga._id },
+        session,
+      });
     });
     return res.status(201).json(descarga);
   } catch (error) {
-    const usuario = nombreUsuario(req);
-    if (pedidoDescargando) {
-      await Pedido.findOneAndUpdate(
-        { _id: pedidoDescargando._id, estado: 'DESCARGANDO' },
-        { $set: { estado: pedidoDescargando.estado, usuarioActualizacion: usuario } },
-        { usuarioActualizacion: usuario },
-      ).catch(() => {});
-    }
-    if (gatewayOcupado) {
-      await Gateway.findOneAndUpdate(
-        { _id: gatewayOcupado._id, estado: 'OCUPADO' },
-        { $set: { estado: 'LIBRE', usuarioActualizacion: usuario } },
-        { usuarioActualizacion: usuario },
-      ).catch(() => {});
-    }
+    if (error.status) return res.status(error.status).json({ mensaje: error.message });
     if (error.name === 'ValidationError' || error.name === 'CastError') {
       return res.status(400).json({ mensaje: 'Los datos de la descarga no son válidos', detalle: error.message });
     }
@@ -251,7 +267,6 @@ const iniciarDescarga = async (req, res) => {
 };
 
 const finalizarDescarga = async (req, res) => {
-  let pedidoFinalizado;
   try {
     const { descargasId } = req.body || {};
     if (!mongoose.isValidObjectId(descargasId)) {
@@ -269,48 +284,49 @@ const finalizarDescarga = async (req, res) => {
       Math.floor((fechaHoraFin.getTime() - new Date(descargaActual.fechaHoraInicio).getTime()) / 60000),
     );
     const usuario = nombreUsuario(req);
-    const descarga = await Descarga.findOneAndUpdate(
-      { _id: descargasId, activo: true, fechaHoraFin: { $exists: false } },
-      { $set: { fechaHoraFin, duracionMinutos, usuarioActualizacion: usuario } },
-      { new: true, usuarioActualizacion: usuario },
-    );
-    if (!descarga) return res.status(409).json({ mensaje: 'La descarga ya fue finalizada' });
-
-    pedidoFinalizado = await Pedido.findOneAndUpdate(
-      { _id: descarga.pedidoId, activo: true, estado: 'DESCARGANDO' },
-      { $set: { estado: 'FINALIZADO', usuarioActualizacion: usuario } },
-      { new: true, usuarioActualizacion: usuario },
-    );
-    if (!pedidoFinalizado) {
-      await Descarga.findOneAndUpdate(
-        { _id: descarga._id },
-        { $unset: { fechaHoraFin: 1, duracionMinutos: 1 } },
-        { usuarioActualizacion: usuario },
-      );
-      return res.status(409).json({ mensaje: 'El pedido asociado no está en estado DESCARGANDO' });
+    const usuarioId = req.usuario?.id;
+    if (!mongoose.isValidObjectId(usuarioId)) {
+      return res.status(401).json({ mensaje: 'No se pudo identificar al usuario autenticado' });
     }
-
-    const gateway = await Gateway.findOneAndUpdate(
-      { _id: descarga.gatewayId, activo: true, estado: 'OCUPADO' },
-      { $set: { estado: 'LIBRE', usuarioActualizacion: usuario } },
-      { new: true, usuarioActualizacion: usuario },
-    );
-    if (!gateway) {
-      await Pedido.findOneAndUpdate(
-        { _id: pedidoFinalizado._id, estado: 'FINALIZADO' },
-        { $set: { estado: 'DESCARGANDO', usuarioActualizacion: usuario } },
-        { usuarioActualizacion: usuario },
+    let resultado;
+    await ejecutarTransaccion(async (session) => {
+      const descarga = await Descarga.findOneAndUpdate(
+        { _id: descargasId, activo: true, fechaHoraFin: { $exists: false } },
+        { $set: { fechaHoraFin, duracionMinutos, usuarioActualizacion: usuario } },
+        { new: true, session, usuarioActualizacion: usuario },
       );
-      await Descarga.findOneAndUpdate(
-        { _id: descarga._id },
-        { $unset: { fechaHoraFin: 1, duracionMinutos: 1 } },
-        { usuarioActualizacion: usuario },
-      );
-      return res.status(409).json({ mensaje: 'El gateway asociado no está ocupado' });
-    }
+      if (!descarga) throw Object.assign(new Error('La descarga ya fue finalizada'), { status: 409 });
 
-    return res.status(200).json({ descarga, pedido: pedidoFinalizado, gateway });
+      const pedido = await Pedido.findOneAndUpdate(
+        { _id: descarga.pedidoId, activo: true, estado: 'DESCARGANDO' },
+        { $set: { estado: 'FINALIZADO', usuarioActualizacion: usuario } },
+        { new: true, session, usuarioActualizacion: usuario },
+      );
+      if (!pedido) throw Object.assign(new Error('El pedido asociado no está en estado DESCARGANDO'), { status: 409 });
+
+      const gateway = await Gateway.findOneAndUpdate(
+        { _id: descarga.gatewayId, activo: true, estado: 'OCUPADO' },
+        { $set: { estado: 'LIBRE', usuarioActualizacion: usuario } },
+        { new: true, session, usuarioActualizacion: usuario },
+      );
+      if (!gateway) throw Object.assign(new Error('El gateway asociado no está ocupado'), { status: 409 });
+
+      await registrarEvento({
+        usuarioId,
+        usuarioCreacion: usuario,
+        accion: 'DESCARGA_FINALIZADA',
+        pedidoId: pedido._id,
+        detalles: { descargaId: descarga._id, gatewayId: gateway._id, fechaHoraFin, duracionMinutos },
+        fechaHora: fechaHoraFin,
+        session,
+      });
+      const siguiente = await reevaluarCola({ gateway, usuarioId, usuario, session });
+      resultado = { descarga, pedido, gateway: siguiente?.gateway || gateway, siguiente };
+    });
+
+    return res.status(200).json(resultado);
   } catch (error) {
+    if (error.status) return res.status(error.status).json({ mensaje: error.message });
     if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id de la descarga no es válido' });
     console.error(error);
     return res.status(500).json({ mensaje: 'Error interno del servidor' });

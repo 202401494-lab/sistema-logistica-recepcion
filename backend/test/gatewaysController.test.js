@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Descarga = require('../models/Descarga');
 const Gateway = require('../models/Gateway');
 const Pedido = require('../models/Pedido');
+const Evento = require('../models/Evento');
 const {
   crearGateway,
   actualizarGateway,
@@ -114,6 +115,8 @@ test('ocupa el gateway y registra la descarga para un pedido compatible', async 
   const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
   const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
   const descargaCreateOriginal = Descarga.create;
+  const eventoSaveOriginal = Evento.prototype.save;
+  const startSessionOriginal = mongoose.startSession;
   const pedidoId = new mongoose.Types.ObjectId().toString();
   const gatewayId = new mongoose.Types.ObjectId().toString();
   const operadorId = new mongoose.Types.ObjectId().toString();
@@ -127,15 +130,22 @@ test('ocupa el gateway y registra la descarga para un pedido compatible', async 
   Gateway.findOneAndUpdate = async () => ({ _id: gatewayId, estado: 'OCUPADO' });
   Pedido.findOneAndUpdate = async () => ({ _id: pedidoId, estado: 'DESCARGANDO' });
   Descarga.create = async (datos) => {
-    datosDescarga = datos;
-    return { ...datos, _id: 'descarga-id' };
+    datosDescarga = datos[0];
+    return [{ ...datos[0], _id: 'descarga-id' }];
   };
+  Evento.prototype.save = async function guardarEventoPrueba() { return this; };
+  mongoose.startSession = async () => ({
+    withTransaction: async (operacion) => operacion({}),
+    endSession: async () => {},
+  });
   t.after(() => {
     Pedido.findOne = pedidoFindOriginal;
     Gateway.findOne = gatewayFindOriginal;
     Gateway.findOneAndUpdate = gatewayUpdateOriginal;
     Pedido.findOneAndUpdate = pedidoUpdateOriginal;
     Descarga.create = descargaCreateOriginal;
+    Evento.prototype.save = eventoSaveOriginal;
+    mongoose.startSession = startSessionOriginal;
   });
   const respuesta = crearRespuesta();
 
@@ -156,6 +166,9 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
   const descargaUpdateOriginal = Descarga.findOneAndUpdate;
   const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
   const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
+  const pedidoFindOriginal = Pedido.findOne;
+  const eventoSaveOriginal = Evento.prototype.save;
+  const startSessionOriginal = mongoose.startSession;
   const descargaId = new mongoose.Types.ObjectId().toString();
   const inicio = new Date(Date.now() - 5 * 60 * 1000);
   let cambiosDescarga;
@@ -177,19 +190,35 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
   };
   Gateway.findOneAndUpdate = async (_filtro, cambios) => {
     cambiosGateway = cambios.$set;
-    return { _id: 'gateway-id', estado: cambios.$set.estado };
+    return {
+      _id: 'gateway-id',
+      estado: cambios.$set.estado,
+      tipoCargaPermitida: 'general',
+    };
   };
+  Pedido.findOne = () => ({
+    sort() { return this; },
+    session: async () => null,
+  });
+  Evento.prototype.save = async function guardarEventoPrueba() { return this; };
+  mongoose.startSession = async () => ({
+    withTransaction: async (operacion) => operacion({}),
+    endSession: async () => {},
+  });
   t.after(() => {
     Descarga.findOne = descargaFindOriginal;
     Descarga.findOneAndUpdate = descargaUpdateOriginal;
     Pedido.findOneAndUpdate = pedidoUpdateOriginal;
+    Pedido.findOne = pedidoFindOriginal;
     Gateway.findOneAndUpdate = gatewayUpdateOriginal;
+    Evento.prototype.save = eventoSaveOriginal;
+    mongoose.startSession = startSessionOriginal;
   });
   const respuesta = crearRespuesta();
 
   await finalizarDescarga({
     body: { descargasId: descargaId },
-    usuario: { nombreCompleto: 'Operador' },
+    usuario: { id: new mongoose.Types.ObjectId().toString(), nombreCompleto: 'Operador' },
   }, respuesta);
 
   assert.equal(respuesta.statusCode, 200);

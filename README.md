@@ -9,7 +9,7 @@ Este repositorio ya tiene la base funcional de autenticación con Express + Mong
 
 ## 1. Requisitos previos
 - Node.js 18 o superior
-- MongoDB corriendo localmente en el puerto 27017
+- MongoDB local en el puerto 27017 configurado como replica set (o MongoDB Atlas); las transacciones del ciclo de descarga requieren soporte de transacciones
 - Tener creada la base de datos que se usa en el archivo `.env` del backend
 
 ## 2. Backend
@@ -23,6 +23,8 @@ npm run dev
 ```
 
 Antes de iniciar, reemplaza `JWT_SECRET` en `.env` por una clave aleatoria local. No compartas ni subas `.env`; el archivo está excluido por `.gitignore`.
+
+Para MongoDB local, inicia `mongod` con `--replSet rs0` y ejecuta una vez `mongosh --eval "rs.initiate()"`. Actualiza también el `MONGO_URI` de cualquier `.env` existente para incluir `?replicaSet=rs0`.
 
 ### Usuarios de prueba
 
@@ -39,6 +41,9 @@ Antes de iniciar, reemplaza `JWT_SECRET` en `.env` por una clave aleatoria local
 - GET `/api/admin/dashboard` -> solo administradores
 - GET `/api/coordinacion` -> administradores y coordinadores
 - PATCH `/api/pedidos/:id/llegada` -> operador o administrador; registra hora real, puntualidad y espera anticipada
+- POST `/api/descargas/iniciar` y POST `/api/descargas/finalizar` -> ciclo transaccional de descarga y reevaluación de cola
+- GET `/api/kpis?desde=<ISO>&hasta=<ISO>` -> coordinador o administrador; período opcional de hasta 30 días por defecto
+- PUT `/api/gateways/:id` -> los cambios de mantenimiento se registran en la bitácora inmutable
 - GET/POST `/api/parametros` y PUT/DELETE `/api/parametros/:id` -> solo administradores
 
 Para activar la marcación automática de ausencias, crea `TOLERANCIA_LLEGADA_MINUTOS` con un valor entero igual o mayor a cero. Si el parámetro se inactiva, un nuevo POST con la misma clave lo reactiva y actualiza el valor. El backend revisa los pedidos cada minuto; no aplica una tolerancia predeterminada si el parámetro no está configurado.
