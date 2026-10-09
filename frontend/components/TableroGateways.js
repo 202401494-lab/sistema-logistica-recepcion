@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { obtenerGateways, actualizarGateway, finalizarDescarga } from '../lib/api';
+import {
+    obtenerGateways,
+    obtenerDescargasActivas,
+    actualizarGateway,
+    finalizarDescarga,
+} from '../lib/api';
 import ModalIniciarDescarga from './ModalIniciarDescarga';
 import styles from '../styles/gateways.module.css';
 
@@ -9,21 +14,27 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
     const [cargando, setCargando] = useState(true);
     const [errorMsg, setErrorMsg] = useState('');
     const [gatewaySeleccionado, setGatewaySeleccionado] = useState(null);
+    const [descargaProcesando, setDescargaProcesando] = useState('');
 
     /* Carga los datos de los gateways desde la API y actualiza el estado del componente. */
     const cargarGateways = async () => {
         setCargando(true);
         try {
-            const respuesta = await obtenerGateways();
-
-            console.log('Respuesta de gateways desde la API:', respuesta);
-
-            // Extrae el arreglo correctamente sin importar la envoltura
-            const lista = Array.isArray(respuesta)
-                ? respuesta
-                : (respuesta.data || respuesta.gateways || []);
-
-            setGateways(lista);
+            const [respuestaGateways, respuestaDescargas] = await Promise.all([
+                obtenerGateways(),
+                obtenerDescargasActivas(),
+            ]);
+            const listaGateways = Array.isArray(respuestaGateways)
+                ? respuestaGateways
+                : (respuestaGateways.data || respuestaGateways.gateways || []);
+            const listaDescargas = Array.isArray(respuestaDescargas) ? respuestaDescargas : [];
+            setGateways(listaGateways.map((gateway) => ({
+                ...gateway,
+                descargaActiva: listaDescargas.find((descarga) => {
+                    const gatewayDescargaId = descarga.gatewayId?._id || descarga.gatewayId;
+                    return String(gatewayDescargaId) === String(gateway._id);
+                }) || null,
+            })));
             setErrorMsg('');
         } catch (error) {
             console.error('Error al cargar gateways:', error);
@@ -48,18 +59,23 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
             await cargarGateways();
             if (onActualizarDatos) onActualizarDatos();
         } catch (err) {
-            alert(err.message);
+            setErrorMsg(err.message || 'No fue posible actualizar el gateway.');
         }
     };
 
     /* Finaliza la descarga activa de un gateway y recarga los datos. */
     const manejarFinalizar = async (descargasId) => {
+        if (!descargasId || descargaProcesando) return;
+        setDescargaProcesando(descargasId);
+        setErrorMsg('');
         try {
             await finalizarDescarga(descargasId);
-            await cargarGateways(); // CORREGIDO: antes decía cargarDatosGateways
-            if (onActualizarDatos) onActualizarDatos();
+            await cargarGateways();
+            if (onActualizarDatos) await onActualizarDatos();
         } catch (err) {
-            alert(err.message);
+            setErrorMsg(err.message || 'No fue posible finalizar la descarga.');
+        } finally {
+            setDescargaProcesando('');
         }
     };
 
@@ -72,6 +88,8 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
 
             <div className={styles.grid}>
                 {gateways.map((gw) => {
+                    const descargaActiva = gw.descargaActiva;
+                    const pedidoActivo = descargaActiva?.pedidoId;
                     const esLibre = gw.estado === 'LIBRE';
                     const esOcupado = gw.estado === 'OCUPADO';
                     const esFueraServicio = gw.estado === 'FUERA DE SERVICIO';
@@ -93,10 +111,14 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                                     <br />
                                     {gw.tipoCargaPermitida ? gw.tipoCargaPermitida.toUpperCase() : 'GENERAL'}
                                 </p>
-                                {esOcupado && gw.descargaActiva && (
+                                {esOcupado && descargaActiva && (
                                     <div className={styles.infoDescarga}>
-                                        <p><strong>Pedido:</strong> {gw.descargaActiva.numeroPedido}</p>
+                                        <p><strong>Pedido:</strong> {pedidoActivo?.numeroPedido || 'Descarga activa'}</p>
+                                        <p><strong>Inicio:</strong> {new Date(descargaActiva.fechaHoraInicio).toLocaleString('es-SV')}</p>
                                     </div>
+                                )}
+                                {esOcupado && !descargaActiva && (
+                                    <p className={styles.avisoDescarga}>No se encontró la descarga activa de este gateway.</p>
                                 )}
                             </div>
 
@@ -111,13 +133,14 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                                     </button>
                                 )}
 
-                                {esOcupado && gw.descargaActiva && (
+                                {esOcupado && descargaActiva && (
                                     <button
                                         type="button"
                                         className={styles.btnFinalizar}
-                                        onClick={() => manejarFinalizar(gw.descargaActiva._id)}
+                                        onClick={() => manejarFinalizar(descargaActiva._id)}
+                                        disabled={descargaProcesando === descargaActiva._id}
                                     >
-                                        ✓ Finalizar Descarga
+                                        {descargaProcesando === descargaActiva._id ? 'Finalizando…' : '✓ Finalizar descarga'}
                                     </button>
                                 )}
 
@@ -131,7 +154,7 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                                     </button>
                                 )}
 
-                                {esFueraServicio && (
+                                {esFueraServicio && esAdmin && (
                                     <button
                                         type="button"
                                         className={styles.btnHabilitar}

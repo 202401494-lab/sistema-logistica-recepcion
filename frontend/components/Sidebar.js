@@ -117,6 +117,18 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                     <span className={styles.label}>Gateways</span>
                                 )}
                             </button>
+
+                            <button
+                                type="button"
+                                className={seccionActiva === 'kpis' ? styles.itemActivo : styles.item}
+                                style={seccionActiva === 'kpis' ? { color: estiloActual.colorTextoActivo } : {}}
+                                onClick={() => { setSeccionActiva('kpis'); cerrarEnMovil(); }}
+                            >
+                                <span className={styles.icon}>▥</span>
+                                {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
+                                    <span className={styles.label}>Indicadores</span>
+                                )}
+                            </button>
                         </>
                     )}
 

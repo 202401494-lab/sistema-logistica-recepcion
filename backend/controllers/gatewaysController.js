@@ -12,6 +12,19 @@ const nombreUsuario = (req) => req.usuario?.nombreCompleto
 
 const cargaEsperada = (numeroGateway) => (numeroGateway === 5 ? 'construcción' : 'general');
 
+
+const listarDescargasActivas = async (req, res) => {
+  try {
+    const descargas = await Descarga.find({ activo: true, fechaHoraFin: { $exists: false } })
+      .populate('pedidoId', 'numeroPedido tipoProducto')
+      .populate('gatewayId', 'numeroGateway estado')
+      .sort({ fechaHoraInicio: 1 });
+    return res.status(200).json(descargas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
 const validarGateway = (numeroGateway, tipoCargaPermitida) => {
   if (!Number.isInteger(numeroGateway) || numeroGateway < 1 || numeroGateway > 5) {
     return 'numeroGateway debe ser un entero entre 1 y 5';
@@ -335,6 +348,7 @@ const finalizarDescarga = async (req, res) => {
 
 module.exports = {
   listarGateways,
+  listarDescargasActivas,
   obtenerGateway,
   crearGateway,
   actualizarGateway,

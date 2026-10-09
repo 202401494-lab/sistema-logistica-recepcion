@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { iniciarDescarga } from '../lib/api';
 import styles from '../styles/modal.module.css';
 
+const ESTADOS_INICIABLES = new Set(['PROGRAMADO', 'A TIEMPO', 'ANTICIPADO', 'TARDÍO', 'EN COLA']);
+
 /* Modal para iniciar la descarga de un pedido a través de un gateway. */
 export default function ModalIniciarDescarga({ gateway, pedidos, onClose, onExito }) {
     const [pedidoId, setPedidoId] = useState('');
@@ -11,7 +13,8 @@ export default function ModalIniciarDescarga({ gateway, pedidos, onClose, onExit
 
     /* Filtrar pedidos cuya categoría coincida exactamente con la permitida por el Gateway */
     const pedidosElegibles = pedidos.filter(
-        (p) => p.tipoProducto === gateway.tipoCargaPermitida
+        (pedido) => pedido.tipoProducto === gateway.tipoCargaPermitida
+            && ESTADOS_INICIABLES.has(pedido.estado)
     );
 
     /* Maneja el envío del formulario para iniciar la descarga. */
@@ -47,7 +50,7 @@ export default function ModalIniciarDescarga({ gateway, pedidos, onClose, onExit
                         <option value="">-- Selecciona un pedido --</option>
                         {pedidosElegibles.map((p) => (
                             <option key={p._id} value={p._id}>
-                                {p.numeroPedido} - {p.proveedorId?.nombreEmpresa || 'Proveedor'} ({p.tipoProducto})
+                                {p.numeroPedido} - {p.proveedorId?.razonSocial || 'Proveedor'} ({p.estado})
                             </option>
                         ))}
                     </select>
