@@ -72,9 +72,12 @@ export default function CasetasRegistradas() {
 
     return (
         <div style={{ backgroundColor: tema.bg, minHeight: '100vh', padding: '20px', transition: 'background 0.3s ease' }}>
-            <div style={{ maxWidth: '900px', margin: '0 auto 20px auto' }}>
+            <div style={{ maxWidth: '900px', margin: '0 auto 20px auto', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                <Link href="/caseta" style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff', padding: '10px 18px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '600' }}>
+                    ← Volver a Caseta
+                </Link>
                 <Link href="/dashboard" style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff', padding: '10px 18px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '600' }}>
-                    ← Volver al Dashboard
+                    Volver al Dashboard
                 </Link>
             </div>
 

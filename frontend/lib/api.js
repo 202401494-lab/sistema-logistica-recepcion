@@ -160,3 +160,31 @@ export async function finalizarDescarga(descargasId) {
     });
     return procesarRespuesta(res);
 }
+
+export async function obtenerDescargasActivas() {
+    const res = await fetch(`${API_BASE_URL}/descargas/activas`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(res);
+}
+
+export async function obtenerKpis(desde, hasta) {
+    const parametros = new URLSearchParams();
+    if (desde) {
+        const inicioLocal = new Date(`${desde}T00:00:00`);
+        parametros.set('desde', inicioLocal.toISOString());
+    }
+    if (hasta) {
+        const finExclusivo = new Date(`${hasta}T00:00:00`);
+        finExclusivo.setDate(finExclusivo.getDate() + 1);
+        const ahora = new Date();
+        parametros.set('hasta', (finExclusivo > ahora ? ahora : finExclusivo).toISOString());
+    }
+    const query = parametros.toString();
+    const res = await fetch(`${API_BASE_URL}/kpis${query ? `?${query}` : ''}`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(res);
+}

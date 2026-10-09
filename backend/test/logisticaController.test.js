@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Pedido = require('../models/Pedido');
+const Gateway = require('../models/Gateway');
+const Evento = require('../models/Evento');
 const { registrarLlegada, crearPedido } = require('../controllers/logisticaController');
 
 test('rechaza un numeroPedido enviado manualmente', async () => {
@@ -63,7 +65,11 @@ test('rechaza una hora de llegada futura antes de consultar el pedido', async (t
 test('registra una llegada anticipada y la deja en espera antes de la ventana', async (t) => {
   const findOneOriginal = Pedido.findOne;
   const findOneAndUpdateOriginal = Pedido.findOneAndUpdate;
+  const gatewayFindOriginal = Gateway.findOne;
+  const eventoSaveOriginal = Evento.prototype.save;
+  const startSessionOriginal = mongoose.startSession;
   const id = new mongoose.Types.ObjectId().toString();
+  const usuarioId = new mongoose.Types.ObjectId().toString();
   const inicioVentana = new Date(Date.now() + 10 * 60 * 1000);
   const finVentana = new Date(inicioVentana.getTime() + 60 * 60 * 1000);
   let filtroActualizacion;
@@ -79,9 +85,18 @@ test('registra una llegada anticipada y la deja en espera antes de la ventana', 
     cambiosAplicados = cambios.$set;
     return { _id: id, ...cambios.$set };
   };
+  Gateway.findOne = async () => ({ _id: new mongoose.Types.ObjectId() });
+  Evento.prototype.save = async function guardarEventoPrueba() { return this; };
+  mongoose.startSession = async () => ({
+    withTransaction: async (operacion) => operacion({}),
+    endSession: async () => {},
+  });
   t.after(() => {
     Pedido.findOne = findOneOriginal;
     Pedido.findOneAndUpdate = findOneAndUpdateOriginal;
+    Gateway.findOne = gatewayFindOriginal;
+    Evento.prototype.save = eventoSaveOriginal;
+    mongoose.startSession = startSessionOriginal;
   });
 
   const respuesta = {
@@ -97,7 +112,7 @@ test('registra una llegada anticipada y la deja en espera antes de la ventana', 
     },
   };
 
-  await registrarLlegada({ params: { id }, body: {}, usuario: { rol: 'operador' } }, respuesta);
+  await registrarLlegada({ params: { id }, body: {}, usuario: { id: usuarioId, rol: 'operador' } }, respuesta);
 
   assert.equal(respuesta.statusCode, 200);
   assert.equal(respuesta.body.estadoPuntualidad, 'Anticipado');

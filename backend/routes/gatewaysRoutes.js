@@ -2,6 +2,7 @@ const express = require('express');
 const { verificarToken, autorizarRoles } = require('../middleware/authMiddleware');
 const {
   listarGateways,
+  listarDescargasActivas,
   obtenerGateway,
   crearGateway,
   actualizarGateway,
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.use(verificarToken);
 router.get('/gateways', listarGateways);
+router.get('/descargas/activas', listarDescargasActivas);
 router.get('/gateways/:id', obtenerGateway);
 router.post('/gateways', autorizarRoles('administrador'), crearGateway);
 router.put('/gateways/:id', autorizarRoles('administrador'), actualizarGateway);

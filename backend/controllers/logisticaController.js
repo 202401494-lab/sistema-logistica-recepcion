@@ -1,8 +1,11 @@
 const mongoose = require('mongoose');
 const Proveedor = require('../models/Proveedor');
 const Pedido = require('../models/Pedido');
+const Gateway = require('../models/Gateway');
 const generarNumeroPedido = require('../services/numeroPedido');
 const { clasificarLlegada, obtenerFechaLlegada } = require('../services/clasificacionLlegada');
+const registrarEvento = require('../services/auditoriaEventos');
+const ejecutarTransaccion = require('../services/transaccionMongo');
 
 // RN-02: la operación funciona de 07:00 a 17:00, de lunes a sábado.
 const HORA_APERTURA = 7;
@@ -249,17 +252,46 @@ const registrarLlegada = async (req, res) => {
 
     const estadoPuntualidad = clasificarLlegada(llegada, pedido.inicioVentana, pedido.finVentana);
     const enEspera = estadoPuntualidad === 'Anticipado' && ahora < pedido.inicioVentana;
-    const usuario = req.usuario?.nombreCompleto || req.usuario?.email || 'sistema';
-    const actualizado = await Pedido.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        activo: true,
-        estado: 'PROGRAMADO',
-        fechaHoraLlegadaReal: { $exists: false },
-      },
-      { $set: { fechaHoraLlegadaReal: llegada, estadoPuntualidad, enEspera } },
-      { new: true, usuarioActualizacion: usuario },
-    );
+    const usuario = nombreUsuario(req);
+    const usuarioId = req.usuario?.id;
+    if (!mongoose.isValidObjectId(usuarioId)) {
+      return res.status(401).json({ mensaje: 'No se pudo identificar al usuario autenticado' });
+    }
+    const gatewayDisponible = await Gateway.findOne({
+      activo: true,
+      estado: 'LIBRE',
+      tipoCargaPermitida: pedido.tipoProducto,
+    });
+    let actualizado;
+    await ejecutarTransaccion(async (session) => {
+      actualizado = await Pedido.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          activo: true,
+          estado: 'PROGRAMADO',
+          fechaHoraLlegadaReal: { $exists: false },
+        },
+        {
+          $set: {
+            fechaHoraLlegadaReal: llegada,
+            estadoPuntualidad,
+            enEspera,
+            ...(!gatewayDisponible ? { estado: 'EN COLA' } : {}),
+          },
+        },
+        { new: true, session, usuarioActualizacion: usuario },
+      );
+      if (!actualizado) return;
+      await registrarEvento({
+        usuarioId,
+        usuarioCreacion: usuario,
+        accion: 'LLEGADA_REGISTRADA',
+        pedidoId: actualizado._id,
+        detalles: { fechaHoraLlegadaReal: llegada, estadoPuntualidad, enCola: !gatewayDisponible },
+        fechaHora: ahora,
+        session,
+      });
+    });
     if (!actualizado) {
       return res.status(409).json({ mensaje: 'El pedido cambió o ya tiene una llegada registrada' });
     }
@@ -343,11 +375,26 @@ const reprogramarPedido = async (req, res) => {
         alternativas: await obtenerAlternativas(inicio, pedido.duracionEstimadaMinutos),
       });
     }
-    pedido.fechaHoraProgramada = programada;
-    pedido.inicioVentana = inicio;
-    pedido.finVentana = fin;
-    pedido.usuarioActualizacion = nombreUsuario(req);
-    await pedido.save({ usuarioActualizacion: nombreUsuario(req) });
+    const usuario = nombreUsuario(req);
+    const usuarioId = req.usuario?.id;
+    if (!mongoose.isValidObjectId(usuarioId)) {
+      return res.status(401).json({ mensaje: 'No se pudo identificar al usuario autenticado' });
+    }
+    await ejecutarTransaccion(async (session) => {
+      pedido.fechaHoraProgramada = programada;
+      pedido.inicioVentana = inicio;
+      pedido.finVentana = fin;
+      pedido.usuarioActualizacion = usuario;
+      await pedido.save({ session, usuarioActualizacion: usuario });
+      await registrarEvento({
+        usuarioId,
+        usuarioCreacion: usuario,
+        accion: 'CITA_REPROGRAMADA',
+        pedidoId: pedido._id,
+        detalles: { fechaHoraProgramada: programada, inicioVentana: inicio, finVentana: fin },
+        session,
+      });
+    });
     return res.status(200).json(pedido);
   } catch (error) {
     if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id del pedido no es válido' });
