@@ -1,7 +1,10 @@
 import styles from '../styles/resumenCard.module.css';
 import { obtenerNombreProveedor, obtenerFechaFormateada } from '../lib/formatters';
+import { obtenerUltimosPedidos } from '../lib/pedidos';
 
 export default function ResumenPedidosCard({ pedidos, proveedores, onVerTodos }) {
+    const pedidosRecientes = obtenerUltimosPedidos(pedidos);
+
     return (
         <section className={styles.heroCard}>
             <div style={{ width: '100%' }}>
@@ -16,14 +19,14 @@ export default function ResumenPedidosCard({ pedidos, proveedores, onVerTodos })
                             className={styles.secondaryButton}
                             onClick={onVerTodos}
                         >
-                            Ver todos ({pedidos.length})
+                            Ver últimos 3
                         </button>
                     )}
                 </div>
 
-                {pedidos && pedidos.length > 0 ? (
+                {pedidosRecientes.length > 0 ? (
                     <div className={styles.ordersList}>
-                        {pedidos.slice(0, 3).map((pedido) => (
+                        {pedidosRecientes.map((pedido) => (
                             <div key={pedido.id || pedido._id} className={styles.orderItem}>
                                 <div>
                                     <strong>Pedido #{pedido.numeroPedido || pedido.codigo || pedido._id}</strong>

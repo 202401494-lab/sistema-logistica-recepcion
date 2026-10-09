@@ -109,6 +109,9 @@ export default function Caseta() {
                     <Link href="/casetas-registradas" className={styles.linkButton}>
                         Ver Arribos Registrados
                     </Link>
+                    <Link href="/dashboard" className={styles.linkButton}>
+                        Volver al Dashboard
+                    </Link>
                 </div>
             </header>
 

@@ -1,23 +1,48 @@
-import styles from '../styles/modal.module.css';
+import { useEffect } from 'react';
+import styles from '../styles/ModalTodosPedidos.module.css';
 import { obtenerNombreProveedor, obtenerFechaFormateada } from '../lib/formatters';
+import { obtenerUltimosPedidos } from '../lib/pedidos';
 
 export default function ModalTodosPedidos({ pedidos, onClose, proveedores }) {
+    const pedidosRecientes = obtenerUltimosPedidos(pedidos);
+
+    useEffect(() => {
+        const manejarEscape = (event) => {
+            if (event.key === 'Escape') onClose();
+        };
+
+        window.addEventListener('keydown', manejarEscape);
+        return () => window.removeEventListener('keydown', manejarEscape);
+    }, [onClose]);
+
     return (
-        <div className={styles.overlay}>
-            <div className={styles.content}>
+        <div className={styles.overlay} onClick={onClose}>
+            <section
+                className={styles.content}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="todos-pedidos-titulo"
+                onClick={(event) => event.stopPropagation()}
+            >
                 <div className={styles.header}>
                     <div>
-                        <h3>Todos los pedidos programados</h3>
-                        <p>Total de registros: {pedidos.length}</p>
+                        <span className={styles.eyebrow}>PANEL GENERAL</span>
+                        <h2 id="todos-pedidos-titulo">Últimos 3 pedidos agregados</h2>
+                        <p>Mostrando {pedidosRecientes.length} de {pedidos.length} pedidos</p>
                     </div>
-                    <button className={styles.closeButton} onClick={onClose}>
+                    <button
+                        type="button"
+                        className={styles.closeButton}
+                        onClick={onClose}
+                        aria-label="Cerrar lista de pedidos"
+                    >
                         ✕
                     </button>
                 </div>
 
                 <div className={styles.body}>
                     <div className={styles.list}>
-                        {pedidos.map((pedido) => (
+                        {pedidosRecientes.map((pedido) => (
                             <div key={pedido.id || pedido._id} className={styles.card}>
                                 <div>
                                     <strong className={styles.cardTitle}>
@@ -45,10 +70,10 @@ export default function ModalTodosPedidos({ pedidos, onClose, proveedores }) {
                         className={styles.primaryButton}
                         onClick={onClose}
                     >
-                        Cerrar
+                        Volver al resumen
                     </button>
                 </div>
-            </div>
+            </section>
         </div>
     );
 }
