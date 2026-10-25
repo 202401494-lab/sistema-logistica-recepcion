@@ -16,10 +16,26 @@ const cargaEsperada = (numeroGateway) => (numeroGateway === 5 ? 'construcción' 
 const listarDescargasActivas = async (req, res) => {
   try {
     const descargas = await Descarga.find({ activo: true, fechaHoraFin: { $exists: false } })
-      .populate('pedidoId', 'numeroPedido tipoProducto')
       .populate('gatewayId', 'numeroGateway estado')
-      .sort({ fechaHoraInicio: 1 });
-    return res.status(200).json(descargas);
+      .sort({ fechaHoraInicio: -1 })
+      .lean();
+    const pedidoIds = [...new Set(
+      descargas
+        .map(({ pedidoId }) => (pedidoId ? String(pedidoId) : null))
+        .filter(Boolean),
+    )];
+    const pedidos = pedidoIds.length
+      ? await Pedido.find({ _id: { $in: pedidoIds } }, 'numeroPedido tipoProducto')
+        .setOptions({ incluirInactivos: true })
+        .lean()
+      : [];
+    const pedidosPorId = new Map(pedidos.map((pedido) => [String(pedido._id), pedido]));
+    const descargasConPedido = descargas.map((descarga) => ({
+      ...descarga,
+      pedidoIdReferencia: String(descarga.pedidoId),
+      pedidoId: pedidosPorId.get(String(descarga.pedidoId)) || null,
+    }));
+    return res.status(200).json(descargasConPedido);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ mensaje: 'Error interno del servidor' });
@@ -311,30 +327,56 @@ const finalizarDescarga = async (req, res) => {
       if (!descarga) throw Object.assign(new Error('La descarga ya fue finalizada'), { status: 409 });
 
       const pedido = await Pedido.findOneAndUpdate(
-        { _id: descarga.pedidoId, activo: true, estado: 'DESCARGANDO' },
+        { _id: descarga.pedidoId, estado: { $nin: ['CANCELADO'] } },
         { $set: { estado: 'FINALIZADO', usuarioActualizacion: usuario } },
-        { new: true, session, usuarioActualizacion: usuario },
+        {
+          new: true,
+          session,
+          usuarioActualizacion: usuario,
+          incluirInactivos: true,
+        },
       );
-      if (!pedido) throw Object.assign(new Error('El pedido asociado no está en estado DESCARGANDO'), { status: 409 });
 
+      const otraDescargaActiva = await Descarga.findOne({
+        _id: { $ne: descarga._id },
+        gatewayId: descarga.gatewayId,
+        activo: true,
+        fechaHoraFin: { $exists: false },
+      }).session(session);
+      const estadoGateway = otraDescargaActiva ? 'OCUPADO' : 'LIBRE';
       const gateway = await Gateway.findOneAndUpdate(
-        { _id: descarga.gatewayId, activo: true, estado: 'OCUPADO' },
-        { $set: { estado: 'LIBRE', usuarioActualizacion: usuario } },
+        {
+          _id: descarga.gatewayId,
+          activo: true,
+          estado: { $in: ['LIBRE', 'OCUPADO'] },
+        },
+        { $set: { estado: estadoGateway, usuarioActualizacion: usuario } },
         { new: true, session, usuarioActualizacion: usuario },
       );
-      if (!gateway) throw Object.assign(new Error('El gateway asociado no está ocupado'), { status: 409 });
+      if (!gateway) throw Object.assign(new Error('El gateway asociado no está disponible para actualizarse'), { status: 409 });
 
       await registrarEvento({
         usuarioId,
         usuarioCreacion: usuario,
         accion: 'DESCARGA_FINALIZADA',
-        pedidoId: pedido._id,
-        detalles: { descargaId: descarga._id, gatewayId: gateway._id, fechaHoraFin, duracionMinutos },
+        pedidoId: descarga.pedidoId,
+        detalles: {
+          descargaId: descarga._id,
+          gatewayId: gateway._id,
+          fechaHoraFin,
+          duracionMinutos,
+          pedidoActualizado: Boolean(pedido),
+        },
         fechaHora: fechaHoraFin,
         session,
       });
       const siguiente = await reevaluarCola({ gateway, usuarioId, usuario, session });
-      resultado = { descarga, pedido, gateway: siguiente?.gateway || gateway, siguiente };
+      resultado = {
+        descarga,
+        pedido,
+        gateway: siguiente?.gateway || gateway,
+        siguiente,
+      };
     });
 
     return res.status(200).json(resultado);

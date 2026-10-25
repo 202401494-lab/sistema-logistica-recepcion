@@ -2,9 +2,27 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Pedido = require('../models/Pedido');
+const Descarga = require('../models/Descarga');
 const Gateway = require('../models/Gateway');
 const Evento = require('../models/Evento');
-const { registrarLlegada, crearPedido } = require('../controllers/logisticaController');
+const {
+  registrarLlegada,
+  crearPedido,
+  cancelarPedido,
+} = require('../controllers/logisticaController');
+
+const crearRespuesta = () => ({
+  statusCode: null,
+  body: null,
+  status(codigo) {
+    this.statusCode = codigo;
+    return this;
+  },
+  json(contenido) {
+    this.body = contenido;
+    return this;
+  },
+});
 
 test('rechaza un numeroPedido enviado manualmente', async () => {
   const respuesta = {
@@ -24,6 +42,43 @@ test('rechaza un numeroPedido enviado manualmente', async () => {
 
   assert.equal(respuesta.statusCode, 400);
   assert.match(respuesta.body.mensaje, /generado automáticamente/);
+});
+
+test('impide cancelar un pedido mientras está descargándose', async (t) => {
+  const pedidoFindOriginal = Pedido.findOne;
+  const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
+  Pedido.findOne = async () => ({ _id: new mongoose.Types.ObjectId(), estado: 'DESCARGANDO' });
+  Pedido.findOneAndUpdate = async () => assert.fail('No debe cancelar un pedido que está descargándose');
+  t.after(() => {
+    Pedido.findOne = pedidoFindOriginal;
+    Pedido.findOneAndUpdate = pedidoUpdateOriginal;
+  });
+  const respuesta = crearRespuesta();
+
+  await cancelarPedido({ params: { id: new mongoose.Types.ObjectId().toString() } }, respuesta);
+
+  assert.equal(respuesta.statusCode, 409);
+  assert.match(respuesta.body.mensaje, /descarga está activa/);
+});
+
+test('impide cancelar un pedido con una descarga abierta aunque su estado no coincida', async (t) => {
+  const pedidoFindOriginal = Pedido.findOne;
+  const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
+  const descargaFindOriginal = Descarga.findOne;
+  Pedido.findOne = async () => ({ _id: new mongoose.Types.ObjectId(), estado: 'EN COLA' });
+  Pedido.findOneAndUpdate = async () => assert.fail('No debe cancelar un pedido con una descarga abierta');
+  Descarga.findOne = async () => ({ _id: new mongoose.Types.ObjectId() });
+  t.after(() => {
+    Pedido.findOne = pedidoFindOriginal;
+    Pedido.findOneAndUpdate = pedidoUpdateOriginal;
+    Descarga.findOne = descargaFindOriginal;
+  });
+  const respuesta = crearRespuesta();
+
+  await cancelarPedido({ params: { id: new mongoose.Types.ObjectId().toString() } }, respuesta);
+
+  assert.equal(respuesta.statusCode, 409);
+  assert.match(respuesta.body.mensaje, /descarga está activa/);
 });
 
 test('rechaza una hora de llegada futura antes de consultar el pedido', async (t) => {

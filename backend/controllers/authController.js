@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
+const { crearTokenTemporalMfa, crearTokenAcceso } = require('../services/authTokens');
 require('../models/Role');
 
 // POST /api/auth/login
@@ -15,7 +15,9 @@ const login = async (req, res) => {
 
     // Se normaliza el correo porque el esquema lo almacena en minúsculas.
     // populate('roles') reemplaza los ObjectId por documentos completos de Role.
-    const usuario = await Usuario.findOne({ email: email.toLowerCase() }).populate('roles');
+    const usuario = await Usuario.findOne({ email: email.toLowerCase() })
+      .select('+password')
+      .populate('roles');
 
     if (!usuario) {
       return res.status(401).json({ mensaje: 'Credenciales inválidas' });
@@ -36,17 +38,19 @@ const login = async (req, res) => {
     // aunque el esquema soporta muchos a muchos (arreglo de roles).
     const rolPrincipal = usuario.roles.length > 0 ? usuario.roles[0].nombre : null;
 
-    // Payload SIN información sensible (nunca incluir el password)
-    const payload = {
-      id: usuario._id,
-      email: usuario.email,
-      rol: rolPrincipal,
-      // Permite registrar el nombre completo sin consultar al usuario en cada operación.
-      nombreCompleto: `${usuario.nombres} ${usuario.apellidosCompleto}`.trim(),
-    };
+    if (usuario.mfaObligatorio || usuario.twoFactorEnabled) {
+      const tempToken = crearTokenTemporalMfa(usuario);
+      return res.status(200).json({
+        mensaje: usuario.twoFactorEnabled
+          ? 'Se requiere el código de autenticación multifactor'
+          : 'Es necesario configurar la autenticación multifactor',
+        mfaRequired: true,
+        mfaSetupRequired: !usuario.twoFactorEnabled,
+        tempToken,
+      });
+    }
 
-    // El token dura 24 horas y será enviado al navegador para las siguientes solicitudes.
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = crearTokenAcceso(usuario, rolPrincipal);
 
     return res.status(200).json({
       mensaje: 'Login exitoso',

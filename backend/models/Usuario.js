@@ -13,8 +13,12 @@ const usuarioSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    password: { type: String, required: true }, // hash generado con bcrypt
+    password: { type: String, required: true, select: false }, // hash generado con bcrypt
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Role' }],
+    mfaObligatorio: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, select: false },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorRecoveryCodes: { type: [String], default: [], select: false },
     estado: {
       type: String,
       enum: ['activo', 'inactivo'],

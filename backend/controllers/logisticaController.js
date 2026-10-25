@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Proveedor = require('../models/Proveedor');
 const Pedido = require('../models/Pedido');
+const Descarga = require('../models/Descarga');
 const Gateway = require('../models/Gateway');
 const generarNumeroPedido = require('../services/numeroPedido');
 const { clasificarLlegada, obtenerFechaLlegada } = require('../services/clasificacionLlegada');
@@ -405,13 +406,31 @@ const reprogramarPedido = async (req, res) => {
 
 const cancelarPedido = async (req, res) => {
   try {
+    const pedidoActual = await Pedido.findOne({ _id: req.params.id, activo: true });
+    if (!pedidoActual) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    if (pedidoActual.estado === 'DESCARGANDO') {
+      return res.status(409).json({ mensaje: 'No se puede cancelar un pedido mientras su descarga está activa' });
+    }
+    const descargaActiva = await Descarga.findOne({
+      pedidoId: pedidoActual._id,
+      activo: true,
+      fechaHoraFin: { $exists: false },
+    });
+    if (descargaActiva) {
+      return res.status(409).json({ mensaje: 'No se puede cancelar un pedido mientras su descarga está activa' });
+    }
+
     // La cancelación combina el estado de negocio con soft delete.
     const pedido = await Pedido.findOneAndUpdate(
-      { _id: req.params.id, activo: true },
+      { _id: req.params.id, activo: true, estado: { $ne: 'DESCARGANDO' } },
       { estado: 'CANCELADO', activo: false, usuarioActualizacion: nombreUsuario(req) },
       { new: true, usuarioActualizacion: nombreUsuario(req) },
     );
-    if (!pedido) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    if (!pedido) {
+      const pedidoActualizado = await Pedido.findOne({ _id: req.params.id, activo: true });
+      if (!pedidoActualizado) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+      return res.status(409).json({ mensaje: 'El pedido cambió; actualice e intente nuevamente' });
+    }
     return res.status(200).json(pedido);
   } catch (error) {
     if (error.name === 'CastError') return res.status(400).json({ mensaje: 'El id del pedido no es válido' });

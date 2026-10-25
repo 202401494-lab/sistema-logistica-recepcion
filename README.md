@@ -46,6 +46,15 @@ Para MongoDB local, inicia `mongod` con `--replSet rs0` y ejecuta una vez `mongo
 - PUT `/api/gateways/:id` -> los cambios de mantenimiento se registran en la bitácora inmutable
 - GET/POST `/api/parametros` y PUT/DELETE `/api/parametros/:id` -> solo administradores
 
+### Autenticación multifactor (MFA)
+
+- POST `/api/auth/login` devuelve un JWT de acceso de 8 horas si el usuario no requiere MFA. Si MFA es obligatorio o ya está activado, devuelve un `tempToken` válido por 5 minutos y no un JWT de acceso.
+- POST `/api/mfa/setup` y POST `/api/mfa/enable` -> requieren `Authorization: Bearer <tempToken>`; el primero devuelve el URI `otpauth://` para generar el QR y el segundo recibe `{ "code": "123456" }` para confirmar el enrolamiento.
+- POST `/api/auth/mfa/verify-login` -> requiere el token temporal y `{ "code": "123456" }`; solo con un TOTP válido entrega el JWT definitivo de 8 horas.
+- PATCH `/api/usuarios/:id/mfa-obligatorio` -> requiere JWT de administrador y `{ "mfaObligatorio": true|false }`.
+- Los códigos TOTP aceptan una ventana de tolerancia de un intervalo (30 segundos). Las claves MFA, contraseñas y códigos de recuperación no se incluyen en consultas normales de usuarios.
+- `MFA_ISSUER` configura el nombre mostrado por las aplicaciones de autenticación; su valor predeterminado es `Sistema Logística`.
+
 Para activar la marcación automática de ausencias, crea `TOLERANCIA_LLEGADA_MINUTOS` con un valor entero igual o mayor a cero. Si el parámetro se inactiva, un nuevo POST con la misma clave lo reactiva y actualiza el valor. El backend revisa los pedidos cada minuto; no aplica una tolerancia predeterminada si el parámetro no está configurado.
 
 ### Pruebas del backend

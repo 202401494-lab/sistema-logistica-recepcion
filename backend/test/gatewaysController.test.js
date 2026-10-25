@@ -174,12 +174,15 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
   let cambiosDescarga;
   let cambiosPedido;
   let cambiosGateway;
-  Descarga.findOne = async () => ({
+  const descargaActiva = {
     _id: descargaId,
     pedidoId: 'pedido-id',
     gatewayId: 'gateway-id',
     fechaHoraInicio: inicio,
-  });
+  };
+  Descarga.findOne = (filtro) => (filtro._id === descargaId
+    ? Promise.resolve(descargaActiva)
+    : { session: async () => null });
   Descarga.findOneAndUpdate = async (_filtro, cambios) => {
     cambiosDescarga = cambios.$set;
     return { ...cambios.$set, _id: descargaId, pedidoId: 'pedido-id', gatewayId: 'gateway-id' };
@@ -226,4 +229,145 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
   assert.equal(cambiosDescarga.duracionMinutos >= 4, true);
   assert.equal(cambiosPedido.estado, 'FINALIZADO');
   assert.equal(cambiosGateway.estado, 'LIBRE');
+});
+
+test('mantiene ocupado el gateway si tiene otra descarga activa', async (t) => {
+  const descargaFindOriginal = Descarga.findOne;
+  const descargaUpdateOriginal = Descarga.findOneAndUpdate;
+  const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
+  const pedidoFindOriginal = Pedido.findOne;
+  const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
+  const eventoSaveOriginal = Evento.prototype.save;
+  const startSessionOriginal = mongoose.startSession;
+  const descargaId = new mongoose.Types.ObjectId().toString();
+  const descargaActiva = {
+    _id: descargaId,
+    pedidoId: new mongoose.Types.ObjectId(),
+    gatewayId: new mongoose.Types.ObjectId(),
+    fechaHoraInicio: new Date(Date.now() - 5 * 60 * 1000),
+  };
+  let filtroGateway;
+  let cambiosGateway;
+  Descarga.findOne = (filtro) => (filtro._id === descargaId
+    ? Promise.resolve(descargaActiva)
+    : { session: async () => ({ _id: new mongoose.Types.ObjectId() }) });
+  Descarga.findOneAndUpdate = async (_filtro, cambios) => ({
+    ...cambios.$set,
+    ...descargaActiva,
+  });
+  Pedido.findOneAndUpdate = async (_filtro, cambios) => ({
+    _id: descargaActiva.pedidoId,
+    ...cambios.$set,
+  });
+  Pedido.findOne = () => ({
+    sort() { return this; },
+    session: async () => null,
+  });
+  Gateway.findOneAndUpdate = async (filtro, cambios) => {
+    filtroGateway = filtro;
+    cambiosGateway = cambios.$set;
+    return {
+      _id: descargaActiva.gatewayId,
+      estado: cambios.$set.estado,
+      tipoCargaPermitida: 'general',
+    };
+  };
+  Evento.prototype.save = async function guardarEventoPrueba() { return this; };
+  mongoose.startSession = async () => ({
+    withTransaction: async (operacion) => operacion({}),
+    endSession: async () => {},
+  });
+  t.after(() => {
+    Descarga.findOne = descargaFindOriginal;
+    Descarga.findOneAndUpdate = descargaUpdateOriginal;
+    Pedido.findOneAndUpdate = pedidoUpdateOriginal;
+    Pedido.findOne = pedidoFindOriginal;
+    Gateway.findOneAndUpdate = gatewayUpdateOriginal;
+    Evento.prototype.save = eventoSaveOriginal;
+    mongoose.startSession = startSessionOriginal;
+  });
+  const respuesta = crearRespuesta();
+
+  await finalizarDescarga({
+    body: { descargasId: descargaId },
+    usuario: { id: new mongoose.Types.ObjectId().toString(), nombreCompleto: 'Operador' },
+  }, respuesta);
+
+  assert.equal(respuesta.statusCode, 200);
+  assert.deepEqual(filtroGateway.estado, { $in: ['LIBRE', 'OCUPADO'] });
+  assert.equal(cambiosGateway.estado, 'OCUPADO');
+  assert.equal(respuesta.body.gateway.estado, 'OCUPADO');
+});
+
+test('finaliza una descarga y marca FINALIZADO el pedido aunque esté inactivo', async (t) => {
+  const descargaFindOriginal = Descarga.findOne;
+  const descargaUpdateOriginal = Descarga.findOneAndUpdate;
+  const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
+  const pedidoFindOriginal = Pedido.findOne;
+  const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
+  const eventoSaveOriginal = Evento.prototype.save;
+  const startSessionOriginal = mongoose.startSession;
+  const descargaId = new mongoose.Types.ObjectId().toString();
+  let cambiosGateway;
+  let detallesEvento;
+  let opcionesPedido;
+  const pedidoId = new mongoose.Types.ObjectId();
+  const gatewayId = new mongoose.Types.ObjectId();
+  const descargaActiva = {
+    _id: descargaId,
+    pedidoId,
+    gatewayId,
+    fechaHoraInicio: new Date(Date.now() - 5 * 60 * 1000),
+  };
+  Descarga.findOne = (filtro) => (filtro._id === descargaId
+    ? Promise.resolve(descargaActiva)
+    : { session: async () => null });
+  Descarga.findOneAndUpdate = async (_filtro, cambios) => ({
+    ...cambios.$set,
+    _id: descargaId,
+    pedidoId,
+    gatewayId,
+  });
+  Pedido.findOneAndUpdate = async (_filtro, cambios, opciones) => {
+    opcionesPedido = opciones;
+    return { _id: pedidoId, activo: false, ...cambios.$set };
+  };
+  Pedido.findOne = () => ({
+    sort() { return this; },
+    session: async () => null,
+  });
+  Gateway.findOneAndUpdate = async (_filtro, cambios) => {
+    cambiosGateway = cambios.$set;
+    return { _id: gatewayId, estado: cambios.$set.estado };
+  };
+  Evento.prototype.save = async function guardarEventoPrueba() {
+    detallesEvento = this.detalles;
+    return this;
+  };
+  mongoose.startSession = async () => ({
+    withTransaction: async (operacion) => operacion({}),
+    endSession: async () => {},
+  });
+  t.after(() => {
+    Descarga.findOne = descargaFindOriginal;
+    Descarga.findOneAndUpdate = descargaUpdateOriginal;
+    Pedido.findOneAndUpdate = pedidoUpdateOriginal;
+    Pedido.findOne = pedidoFindOriginal;
+    Gateway.findOneAndUpdate = gatewayUpdateOriginal;
+    Evento.prototype.save = eventoSaveOriginal;
+    mongoose.startSession = startSessionOriginal;
+  });
+  const respuesta = crearRespuesta();
+
+  await finalizarDescarga({
+    body: { descargasId: descargaId },
+    usuario: { id: new mongoose.Types.ObjectId().toString(), nombreCompleto: 'Operador' },
+  }, respuesta);
+
+  assert.equal(respuesta.statusCode, 200);
+  assert.equal(respuesta.body.pedido.estado, 'FINALIZADO');
+  assert.equal(respuesta.body.descarga.fechaHoraFin instanceof Date, true);
+  assert.equal(cambiosGateway.estado, 'LIBRE');
+  assert.equal(opcionesPedido.incluirInactivos, true);
+  assert.equal(detallesEvento.pedidoActualizado, true);
 });

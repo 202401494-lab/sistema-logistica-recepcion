@@ -23,6 +23,12 @@ const verificarToken = (req, res, next) => {
     // verify comprueba la firma y también la fecha de expiración del JWT.
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (payload.type === 'MFA_TEMP') {
+      return res.status(403).json({
+        mensaje: 'El token temporal MFA no permite acceder a recursos protegidos',
+      });
+    }
+
     // Guardamos la información del usuario decodificada para usarla
     // en cualquier ruta protegida posterior.
     req.usuario = payload;
@@ -32,6 +38,27 @@ const verificarToken = (req, res, next) => {
       mensaje: 'Token inválido o expirado',
       detalle: error.message,
     });
+  }
+};
+
+const verificarTempToken = (req, res, next) => {
+  const headerAuth = req.headers.authorization || '';
+  const token = headerAuth.startsWith('Bearer ') ? headerAuth.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ mensaje: 'Se requiere un token temporal MFA' });
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (payload.type !== 'MFA_TEMP' || !payload.id) {
+      return res.status(403).json({ mensaje: 'Se requiere un token temporal MFA válido' });
+    }
+
+    req.usuario = payload;
+    return next();
+  } catch {
+    return res.status(401).json({ mensaje: 'Token temporal MFA inválido o expirado' });
   }
 };
 
@@ -55,5 +82,6 @@ const autorizarRoles = (...rolesPermitidos) => {
 
 module.exports = {
   verificarToken,
+  verificarTempToken,
   autorizarRoles,
 };

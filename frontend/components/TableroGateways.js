@@ -30,10 +30,17 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
             const listaDescargas = Array.isArray(respuestaDescargas) ? respuestaDescargas : [];
             setGateways(listaGateways.map((gateway) => ({
                 ...gateway,
-                descargaActiva: listaDescargas.find((descarga) => {
-                    const gatewayDescargaId = descarga.gatewayId?._id || descarga.gatewayId;
-                    return String(gatewayDescargaId) === String(gateway._id);
-                }) || null,
+                descargaActiva: listaDescargas
+                    .filter((descarga) => {
+                        const gatewayDescargaId = descarga.gatewayId?._id || descarga.gatewayId;
+                        return String(gatewayDescargaId) === String(gateway._id);
+                    })
+                    .find((descarga) => Boolean(descarga.pedidoId?.numeroPedido))
+                    || listaDescargas.find((descarga) => {
+                        const gatewayDescargaId = descarga.gatewayId?._id || descarga.gatewayId;
+                        return String(gatewayDescargaId) === String(gateway._id);
+                    })
+                    || null,
             })));
             setErrorMsg('');
         } catch (error) {
@@ -90,9 +97,10 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                 {gateways.map((gw) => {
                     const descargaActiva = gw.descargaActiva;
                     const pedidoActivo = descargaActiva?.pedidoId;
-                    const esLibre = gw.estado === 'LIBRE';
-                    const esOcupado = gw.estado === 'OCUPADO';
+                    const esOcupado = gw.estado === 'OCUPADO' || Boolean(descargaActiva);
+                    const esLibre = gw.estado === 'LIBRE' && !descargaActiva;
                     const esFueraServicio = gw.estado === 'FUERA DE SERVICIO';
+                    const estadoMostrado = gw.estado === 'LIBRE' && descargaActiva ? 'OCUPADO' : gw.estado;
 
                     let colorClass = styles.tarjetaLibre;
                     if (esOcupado) colorClass = styles.tarjetaOcupado;
@@ -102,7 +110,7 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                         <div key={gw._id || gw.numeroGateway} className={`${styles.card} ${colorClass}`}>
                             <div className={styles.cardHeader}>
                                 <h3>Gateway {gw.numeroGateway}</h3>
-                                <span className={styles.badgeEstado}>{gw.estado}</span>
+                                <span className={styles.badgeEstado}>{estadoMostrado}</span>
                             </div>
 
                             <div className={styles.cardBody}>
@@ -113,7 +121,13 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                                 </p>
                                 {esOcupado && descargaActiva && (
                                     <div className={styles.infoDescarga}>
-                                        <p><strong>Pedido:</strong> {pedidoActivo?.numeroPedido || 'Descarga activa'}</p>
+                                        <p>
+                                            <strong>Pedido:</strong>{' '}
+                                            {pedidoActivo?.numeroPedido
+                                                || (descargaActiva.pedidoIdReferencia
+                                                    ? `No encontrado (${descargaActiva.pedidoIdReferencia})`
+                                                    : 'No encontrado')}
+                                        </p>
                                         <p><strong>Inicio:</strong> {new Date(descargaActiva.fechaHoraInicio).toLocaleString('es-SV')}</p>
                                     </div>
                                 )}
