@@ -6,7 +6,7 @@ import styles from '../styles/modal.module.css';
 const ESTADOS_INICIABLES = new Set(['PROGRAMADO', 'A TIEMPO', 'ANTICIPADO', 'TARDÍO', 'EN COLA']);
 
 /* Modal para iniciar la descarga de un pedido a través de un gateway. */
-export default function ModalIniciarDescarga({ gateway, pedidos, onClose, onExito }) {
+export default function ModalIniciarDescarga({ gateway, pedidos, onClose, onExito, rol = 'administrador' }) {
     const [pedidoId, setPedidoId] = useState('');
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState('');
@@ -37,7 +37,7 @@ export default function ModalIniciarDescarga({ gateway, pedidos, onClose, onExit
     if (typeof document === 'undefined') return null;
 
     return createPortal(
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={`${styles.overlay} ${styles[rol] || styles.administrador}`} onClick={onClose}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <h3>Asignar Pedido a Gateway {gateway.numeroGateway}</h3>
                 <p><strong>Carga Permitida:</strong> {gateway.tipoCargaPermitida}</p>

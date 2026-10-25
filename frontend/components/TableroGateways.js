@@ -9,7 +9,7 @@ import ModalIniciarDescarga from './ModalIniciarDescarga';
 import styles from '../styles/gateways.module.css';
 
 /* Componente principal para el monitoreo y gestión de Gateways de descarga. */
-export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos, esAdmin = false }) {
+export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos, esAdmin = false, rol = 'administrador' }) {
     const [gateways, setGateways] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [errorMsg, setErrorMsg] = useState('');
@@ -89,7 +89,7 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
     if (cargando) return <div className={styles.loading}>Cargando monitoreo de gateways...</div>;
 
     return (
-        <div className={styles.container}>
+        <div className={`${styles.container} ${styles[rol] || styles.administrador}`}>
             <h2 className={styles.titulo}>Monitoreo de Gateways de Descarga</h2>
             {errorMsg && <p className={styles.error}>{errorMsg}</p>}
 
@@ -187,6 +187,7 @@ export default function TableroGateways({ pedidosEnCola = [], onActualizarDatos,
                 <ModalIniciarDescarga
                     gateway={gatewaySeleccionado}
                     pedidos={pedidosEnCola}
+                    rol={rol}
                     onClose={() => setGatewaySeleccionado(null)}
                     onExito={() => {
                         setGatewaySeleccionado(null);

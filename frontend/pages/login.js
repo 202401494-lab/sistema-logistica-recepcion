@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { guardarSesion, decodeJWT } from '../lib/auth';
+import { guardarSesion, guardarTokenTemporal, limpiarTokenTemporal, decodeJWT } from '../lib/auth';
+import { iniciarSesion } from '../lib/api';
 import styles from '../styles/login.module.css';
-
-const API_URL = 'http://localhost:4000/api/auth/login';
 
 /* Componente de inicio de sesión */
 export default function Login() {
@@ -31,22 +30,25 @@ export default function Login() {
 
     /* Realiza la solicitud de inicio de sesión al backend */
     try {
-      const respuesta = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formulario),
-      });
+      const datos = await iniciarSesion(formulario);
 
-      /* Procesa la respuesta del backend */
-      const datos = await respuesta.json();
+      if (datos.mfaRequired) {
+        if (!datos.tempToken) {
+          throw new Error('El servidor no devolvió el token temporal MFA');
+        }
 
-      /* Maneja errores de autenticación */
-      if (!respuesta.ok) {
-        setError(datos.mensaje || 'Error al iniciar sesión');
+        guardarTokenTemporal(datos.tempToken);
+        sessionStorage.setItem('mfaSetupRequired', String(Boolean(datos.mfaSetupRequired)));
+        router.replace('/login/mfa');
         return;
       }
 
+      if (!datos.token) {
+        throw new Error('El servidor no devolvió el token de acceso');
+      }
+
       /* Guarda el token en el almacenamiento local y redirige según el rol */
+      limpiarTokenTemporal();
       guardarSesion(datos.token);
       const payload = decodeJWT(datos.token);
 
@@ -54,7 +56,7 @@ export default function Login() {
       if (payload?.rol) router.replace('/dashboard');
       else router.replace('/login');
     } catch (err) {
-      setError('No se pudo conectar con el servidor. ¿Está corriendo el backend?');
+      setError(err.message || 'No se pudo conectar con el servidor. ¿Está corriendo el backend?');
     } finally {
       setCargando(false);
     }

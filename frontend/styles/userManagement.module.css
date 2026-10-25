@@ -1,0 +1,123 @@
+.page {
+  min-height: 100vh;
+  padding: clamp(1.5rem, 4vw, 3.5rem) 1rem;
+  background:
+    radial-gradient(ellipse at top left, rgba(96, 165, 250, 0.42), transparent 42%),
+    linear-gradient(135deg, #0f2b68 0%, #1d4ed8 52%, #2563eb 100%);
+}
+
+.content {
+  width: min(100%, 780px);
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.25rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.backLink:hover,
+.backLink:focus-visible {
+  transform: translateX(-2px);
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 28px 70px rgba(8, 28, 76, 0.3);
+}
+
+.cardBody {
+  padding: clamp(1.5rem, 5vw, 3rem);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-bottom: 0.65rem;
+  color: #10234d;
+  font-size: clamp(1.6rem, 4vw, 2.15rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.description {
+  margin-bottom: 1.5rem;
+  color: #5b6880;
+  line-height: 1.7;
+}
+
+.apiNote {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1.75rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #31527e;
+  line-height: 1.55;
+}
+
+.apiNoteIcon {
+  flex: 0 0 auto;
+}
+
+.saveButton {
+  min-height: 46px;
+  padding-inline: 1.25rem;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+  font-weight: 700;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.saveButton:disabled {
+  opacity: 0.58;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding-inline: 0.75rem;
+  }
+
+  .card {
+    border-radius: 18px;
+  }
+}

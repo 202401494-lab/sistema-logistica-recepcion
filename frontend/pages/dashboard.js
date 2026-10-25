@@ -129,6 +129,7 @@ export default function Dashboard() {
       <main
         className={`${roleStyles.container} ${roleStyles[configuracion.clase]} ${styles.mainContent}`}
         data-colapsado={sidebarColapsado}
+        data-rol={rol}
       >
         <section className={styles.dashboard}>
           <header className={styles.dashboardHeader}>
@@ -187,6 +188,7 @@ export default function Dashboard() {
               pedidosEnCola={pedidos}
               onActualizarDatos={cargarPedidos}
               esAdmin={rol === 'administrador'}
+              rol={rol}
             />
           )}
 

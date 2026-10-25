@@ -107,7 +107,7 @@
 }
 
 .actions button[type="submit"] {
-    background: #1d4ed8;
+    background: var(--modal-accent, #2563eb);
     color: #ffffff;
     border: none;
     padding: 0.65rem 1.2rem;
@@ -118,7 +118,22 @@
 }
 
 .actions button[type="submit"]:hover {
-    background: #1e3a8a;
+    background: var(--modal-accent-hover, #1d4ed8);
+}
+
+.administrador {
+    --modal-accent: #2563eb;
+    --modal-accent-hover: #1d4ed8;
+}
+
+.coordinador {
+    --modal-accent: #047857;
+    --modal-accent-hover: #065f46;
+}
+
+.operador {
+    --modal-accent: #c2410c;
+    --modal-accent-hover: #9a3412;
 }
 
 .actions button:disabled {

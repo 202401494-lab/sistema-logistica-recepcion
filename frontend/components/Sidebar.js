@@ -1,4 +1,5 @@
 import styles from '../styles/sidebar.module.css';
+import Link from 'next/link';
 
 export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsado, setColapsado }) {
     const cerrarEnMovil = () => {
@@ -130,6 +131,19 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                 )}
                             </button>
                         </>
+                    )}
+
+                    {rol === 'administrador' && (
+                        <Link
+                            href="/usuarios/gestion"
+                            className={styles.item}
+                            onClick={cerrarEnMovil}
+                        >
+                            <span className={styles.icon}>👥</span>
+                            {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
+                                <span className={styles.label}>Gestión de usuarios</span>
+                            )}
+                        </Link>
                     )}
 
                     <button

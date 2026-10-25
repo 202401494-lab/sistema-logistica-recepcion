@@ -3,6 +3,21 @@
     padding: 1rem 0;
 }
 
+.administrador {
+    --gateway-accent: #2563eb;
+    --gateway-accent-hover: #1d4ed8;
+}
+
+.coordinador {
+    --gateway-accent: #047857;
+    --gateway-accent-hover: #065f46;
+}
+
+.operador {
+    --gateway-accent: #c2410c;
+    --gateway-accent-hover: #9a3412;
+}
+
 .titulo {
     color: #ffffff;
     font-size: 1.5rem;
@@ -118,8 +133,8 @@
 }
 
 .btnIniciar {
-    background: #ffffff;
-    color: #1e3a8a;
+    background: var(--gateway-accent);
+    color: #ffffff;
 }
 
 .btnFinalizar {
@@ -128,13 +143,19 @@
 }
 
 .btnMantenimiento {
-    background: #1e3a8a;
+    background: var(--gateway-accent);
     color: #ffffff;
 }
 
 .btnHabilitar {
-    background: #ffffff;
-    color: #374151;
+    background: var(--gateway-accent);
+    color: #ffffff;
+}
+
+.btnIniciar:hover,
+.btnMantenimiento:hover,
+.btnHabilitar:hover {
+    background: var(--gateway-accent-hover);
 }
 
 .btnIniciar:hover,

@@ -211,9 +211,9 @@
 
 .field input:focus,
 .field select:focus {
-    border-color: #059669;
+    border-color: var(--role-accent, #047857);
     background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
+    box-shadow: 0 0 0 4px var(--role-accent-soft, rgba(4, 120, 87, 0.15));
 }
 
 .fieldHint {
@@ -236,15 +236,36 @@
     min-height: 50px;
     padding: 0 28px;
     border-radius: 12px;
-    background: #047857;
+    background: var(--role-accent, #047857);
     color: #ffffff;
     font-size: 0.95rem;
 }
 
 .primaryButton:hover:not(:disabled) {
-    background: #065f46;
+    background: var(--role-accent-hover, #065f46);
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(4, 120, 87, 0.3);
+    box-shadow: 0 8px 20px var(--role-accent-shadow, rgba(4, 120, 87, 0.3));
+}
+
+.mainContent[data-rol="administrador"] {
+    --role-accent: #2563eb;
+    --role-accent-hover: #1d4ed8;
+    --role-accent-soft: rgba(37, 99, 235, 0.16);
+    --role-accent-shadow: rgba(37, 99, 235, 0.3);
+}
+
+.mainContent[data-rol="coordinador"] {
+    --role-accent: #047857;
+    --role-accent-hover: #065f46;
+    --role-accent-soft: rgba(4, 120, 87, 0.15);
+    --role-accent-shadow: rgba(4, 120, 87, 0.3);
+}
+
+.mainContent[data-rol="operador"] {
+    --role-accent: #c2410c;
+    --role-accent-hover: #9a3412;
+    --role-accent-soft: rgba(194, 65, 12, 0.15);
+    --role-accent-shadow: rgba(194, 65, 12, 0.3);
 }
 
 .primaryButton:disabled,

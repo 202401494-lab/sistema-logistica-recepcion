@@ -74,6 +74,10 @@ npm run dev
 
 Abre: `http://localhost:3000/login`
 
+El frontend permite configurar MFA desde `/login/mfa` después del primer paso de autenticación y administrar el requisito por usuario en `/usuarios/gestion` (solo para administradores). La gestión disponible solicita el ID de MongoDB porque la API actual no ofrece un endpoint para listar usuarios. Para apuntar a otra dirección de API, configura `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:4000/api`).
+
+Este repositorio usa actualmente el Pages Router de Next.js (`frontend/pages`); las pantallas nuevas siguen esa estructura.
+
 ## 4. Estructura del proyecto
 
 ```text
@@ -90,10 +94,15 @@ backend/
 
 frontend/
   components/LogoutButton.js  -> cerrar sesión
+  components/MfaSetupModal.js -> enrolamiento QR y captura del código MFA
+  components/UserForm.js      -> requisito administrativo de MFA por usuario
   lib/auth.js                 -> manejo del token en localStorage
+  lib/api.js                  -> consumo de la API Express
   pages/_app.js               -> carga Bootstrap
   pages/index.js              -> redirección según sesión
   pages/login.js              -> formulario de inicio de sesión
+  pages/login/mfa.js          -> verificación TOTP y enrolamiento MFA
+  pages/usuarios/gestion.js   -> gobernanza del requisito MFA
   pages/admin.js              -> vista del administrador
   pages/coordinador.js        -> vista del coordinador
   pages/operador.js           -> vista del operador

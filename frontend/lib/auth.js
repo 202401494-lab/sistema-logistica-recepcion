@@ -20,6 +20,21 @@ export function guardarSesion(token) {
   localStorage.setItem('token', token);
 }
 
+export function guardarTokenTemporal(token) {
+  sessionStorage.setItem('mfaTempToken', token);
+}
+
+export function obtenerTokenTemporal() {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem('mfaTempToken');
+}
+
+export function limpiarTokenTemporal() {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem('mfaTempToken');
+  sessionStorage.removeItem('mfaSetupRequired');
+}
+
 export function obtenerToken() {
   if (typeof window === 'undefined') return null; // seguridad en SSR
   return localStorage.getItem('token');

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 /* Función para obtener el token de autenticación del almacenamiento local */
 const obtenerToken = () => {
@@ -37,6 +37,60 @@ const procesarRespuesta = async (respuesta) => {
 
     return datos;
 };
+
+const obtenerHeadersMfa = () => {
+    if (typeof window === 'undefined') return { 'Content-Type': 'application/json' };
+
+    const tokenTemporal = sessionStorage.getItem('mfaTempToken');
+    return {
+        'Content-Type': 'application/json',
+        ...(tokenTemporal ? { Authorization: `Bearer ${tokenTemporal}` } : {}),
+    };
+};
+
+export async function iniciarSesion(datosCredenciales) {
+    const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosCredenciales),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function configurarMfa() {
+    const respuesta = await fetch(`${API_BASE_URL}/mfa/setup`, {
+        method: 'POST',
+        headers: obtenerHeadersMfa(),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function activarMfa(code) {
+    const respuesta = await fetch(`${API_BASE_URL}/mfa/enable`, {
+        method: 'POST',
+        headers: obtenerHeadersMfa(),
+        body: JSON.stringify({ code }),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function verificarCodigoMfa(code) {
+    const respuesta = await fetch(`${API_BASE_URL}/auth/mfa/verify-login`, {
+        method: 'POST',
+        headers: obtenerHeadersMfa(),
+        body: JSON.stringify({ code }),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function actualizarMfaObligatorio(usuarioId, mfaObligatorio) {
+    const respuesta = await fetch(`${API_BASE_URL}/usuarios/${usuarioId}/mfa-obligatorio`, {
+        method: 'PATCH',
+        headers: obtenerHeaders(),
+        body: JSON.stringify({ mfaObligatorio }),
+    });
+    return procesarRespuesta(respuesta);
+}
 
 /* Función para registrar un nuevo proveedor */
 export const registrarProveedor = async (datos) => {

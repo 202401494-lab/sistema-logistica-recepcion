@@ -77,6 +77,18 @@
     font-size: 0.95rem;
     box-sizing: border-box;
     white-space: nowrap;
+    text-decoration: none;
+}
+
+a.item,
+a.item:visited {
+    color: #ffffff;
+}
+
+a.item:hover,
+a.item:focus-visible {
+    color: #ffffff;
+    text-decoration: none;
 }
 
 .sidebar.colapsado .item,
