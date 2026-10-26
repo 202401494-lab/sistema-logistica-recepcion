@@ -26,7 +26,9 @@ export default function UserForm() {
       const resultado = await actualizarMfaObligatorio(usuarioId.trim(), mfaObligatorio);
       const usuario = resultado.usuario;
       setMensaje(
-        `Requisito actualizado para ${usuario.email}: MFA ${usuario.mfaObligatorio ? 'obligatorio' : 'no obligatorio'}.`,
+        usuario.mfaObligatorio
+          ? `MFA activado para ${usuario.email}. Si aún no tiene autenticador, deberá configurarlo al iniciar sesión.`
+          : `MFA desactivado para ${usuario.email}; se desvinculó el autenticador configurado.`,
       );
     } catch (err) {
       setError(err.message || 'No se pudo actualizar el requisito de MFA.');
@@ -67,10 +69,10 @@ export default function UserForm() {
           disabled={cargando}
         />
         <label className="form-check-label fw-semibold" htmlFor="mfa-obligatorio">
-          Requerir Autenticación Multifactor (MFA)
+          Activar autenticador MFA
         </label>
         <div className="form-text">
-          Al activarlo, la persona deberá registrar una aplicación de autenticación si todavía no tiene MFA configurado.
+          Al activarlo, se exigirá MFA al iniciar sesión. Al desactivarlo, se elimina el autenticador y la persona dejará de necesitar códigos; podrá configurarlo de nuevo si se vuelve a activar.
         </div>
       </div>
 

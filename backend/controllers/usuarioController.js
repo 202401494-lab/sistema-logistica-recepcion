@@ -14,9 +14,19 @@ const actualizarMfaObligatorio = async (req, res) => {
   }
 
   try {
+    const cambios = mfaObligatorio
+      ? { $set: { mfaObligatorio: true } }
+      : {
+        $set: {
+          mfaObligatorio: false,
+          twoFactorEnabled: false,
+          twoFactorRecoveryCodes: [],
+        },
+        $unset: { twoFactorSecret: 1 },
+      };
     const usuario = await Usuario.findByIdAndUpdate(
       id,
-      { $set: { mfaObligatorio } },
+      cambios,
       { new: true, runValidators: true },
     );
 
@@ -25,7 +35,7 @@ const actualizarMfaObligatorio = async (req, res) => {
     }
 
     return res.status(200).json({
-      mensaje: 'Requisito de MFA actualizado',
+      mensaje: mfaObligatorio ? 'MFA activado para el usuario' : 'MFA desactivado para el usuario',
       usuario: {
         id: usuario._id,
         email: usuario.email,

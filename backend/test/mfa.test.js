@@ -263,14 +263,21 @@ test('solo acepta booleanos al cambiar el requisito MFA de un usuario', async (t
     _id: usuarioId,
     email: 'persona@test.com',
     mfaObligatorio: false,
-    twoFactorEnabled: false,
+    twoFactorEnabled: true,
+    twoFactorSecret: 'secret-base32',
+    twoFactorRecoveryCodes: ['recovery-code'],
   };
   let numeroActualizaciones = 0;
+  let cambiosAplicados;
   Usuario.findByIdAndUpdate = async (id, cambios, opciones) => {
     numeroActualizaciones += 1;
     assert.equal(String(id), String(usuarioId));
     assert.equal(opciones.new, true);
-    usuario.mfaObligatorio = cambios.$set.mfaObligatorio;
+    cambiosAplicados = cambios;
+    Object.assign(usuario, cambios.$set);
+    for (const campo of Object.keys(cambios.$unset || {})) {
+      delete usuario[campo];
+    }
     return usuario;
   };
 
@@ -289,7 +296,43 @@ test('solo acepta booleanos al cambiar el requisito MFA de un usuario', async (t
   }, respuesta);
   assert.equal(respuesta.statusCode, 200);
   assert.equal(respuesta.body.usuario.mfaObligatorio, false);
+  assert.equal(respuesta.body.usuario.twoFactorEnabled, false);
+  assert.equal(usuario.twoFactorSecret, undefined);
+  assert.deepEqual(usuario.twoFactorRecoveryCodes, []);
+  assert.equal(cambiosAplicados.$set.mfaObligatorio, false);
+  assert.equal(cambiosAplicados.$set.twoFactorEnabled, false);
+  assert.deepEqual(cambiosAplicados.$set.twoFactorRecoveryCodes, []);
+  assert.equal(cambiosAplicados.$unset.twoFactorSecret, 1);
   assert.equal(numeroActualizaciones, 1);
+});
+
+test('activar MFA conserva un enrolamiento existente y exige MFA', async (t) => {
+  const findByIdAndUpdateOriginal = Usuario.findByIdAndUpdate;
+  restaurarMetodos(t, { findByIdAndUpdate: findByIdAndUpdateOriginal });
+
+  const usuarioId = new mongoose.Types.ObjectId();
+  const usuario = {
+    _id: usuarioId,
+    email: 'persona@test.com',
+    mfaObligatorio: true,
+    twoFactorEnabled: true,
+  };
+  let cambiosAplicados;
+  Usuario.findByIdAndUpdate = async (_id, cambios) => {
+    cambiosAplicados = cambios;
+    return usuario;
+  };
+
+  const respuesta = crearRespuesta();
+  await actualizarMfaObligatorio({
+    params: { id: String(usuarioId) },
+    body: { mfaObligatorio: true },
+  }, respuesta);
+
+  assert.equal(respuesta.statusCode, 200);
+  assert.equal(respuesta.body.usuario.mfaObligatorio, true);
+  assert.equal(respuesta.body.usuario.twoFactorEnabled, true);
+  assert.deepEqual(cambiosAplicados, { $set: { mfaObligatorio: true } });
 });
 
 test('la ruta administrativa del requisito MFA solo admite administradores', () => {
