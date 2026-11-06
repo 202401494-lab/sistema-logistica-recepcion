@@ -263,6 +263,10 @@ const registrarLlegada = async (req, res) => {
       estado: 'LIBRE',
       tipoCargaPermitida: pedido.tipoProducto,
     });
+    const fechaHoraIngresoCola = gatewayDisponible ? undefined : ahora;
+    const prioridadCalculada = !gatewayDisponible
+      ? ({ 'A tiempo': 300, Anticipado: 200, Tardío: 100 }[estadoPuntualidad] || 0)
+      : undefined;
     let actualizado;
     await ejecutarTransaccion(async (session) => {
       actualizado = await Pedido.findOneAndUpdate(
@@ -277,7 +281,12 @@ const registrarLlegada = async (req, res) => {
             fechaHoraLlegadaReal: llegada,
             estadoPuntualidad,
             enEspera,
-            ...(!gatewayDisponible ? { estado: 'EN COLA' } : {}),
+            ...(!gatewayDisponible ? {
+              estado: 'EN COLA',
+              fechaHoraIngresoCola,
+              minutosEnEspera: 0,
+              prioridadCalculada,
+            } : {}),
           },
         },
         { new: true, session, usuarioActualizacion: usuario },
@@ -292,6 +301,21 @@ const registrarLlegada = async (req, res) => {
         fechaHora: ahora,
         session,
       });
+      if (!gatewayDisponible) {
+        await registrarEvento({
+          usuarioId,
+          usuarioCreacion: usuario,
+          accion: 'INGRESO_COLA',
+          pedidoId: actualizado._id,
+          detalles: {
+            fechaHoraIngresoCola,
+            estadoPuntualidad,
+            prioridadCalculada,
+          },
+          fechaHora: ahora,
+          session,
+        });
+      }
     });
     if (!actualizado) {
       return res.status(409).json({ mensaje: 'El pedido cambió o ya tiene una llegada registrada' });

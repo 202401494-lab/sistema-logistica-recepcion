@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import UserForm from '../../components/UserForm';
+import UserManagement from '../../components/UserManagement';
 import { useAuth } from '../../hooks/useAuth';
 import styles from '../../styles/userManagement.module.css';
 
@@ -31,14 +31,11 @@ export default function GestionUsuarios() {
         <section className={styles.card}>
           <div className={styles.cardBody}>
             <span className={styles.eyebrow}><span aria-hidden="true">🛡️</span> Gobernanza administrativa</span>
-            <h1 className={styles.title}>Requisito de MFA por usuario</h1>
+            <h1 className={styles.title}>Gestión de usuarios y MFA</h1>
             <p className={styles.description}>
-              Define si una cuenta debe usar autenticación multifactor. La autorización también se valida en el backend.
+              Consulta las cuentas del sistema, revisa su estado de MFA y administra si deben usar autenticación multifactor.
             </p>
-            <div className={styles.apiNote} role="note">
-              La API disponible actualiza usuarios por su ID de MongoDB y no incluye un endpoint para listar cuentas.
-            </div>
-            <UserForm />
+            <UserManagement />
           </div>
         </section>
       </div>

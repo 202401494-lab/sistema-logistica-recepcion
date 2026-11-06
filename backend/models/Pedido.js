@@ -17,6 +17,9 @@ const pedidoSchema = new mongoose.Schema(
     fechaHoraProgramada: { type: Date, required: true },
     // La llegada actualiza el pedido existente; no se crea una colección arribos.
     fechaHoraLlegadaReal: { type: Date },
+    fechaHoraIngresoCola: { type: Date },
+    minutosEnEspera: { type: Number, min: 0, default: 0 },
+    prioridadCalculada: { type: Number, default: 0 },
     estadoPuntualidad: {
       type: String,
       enum: ['A tiempo', 'Anticipado', 'Tardío', 'Ausente'],
@@ -38,5 +41,6 @@ const pedidoSchema = new mongoose.Schema(
 );
 
 pedidoSchema.plugin(auditoriaSoftDelete);
+pedidoSchema.index({ activo: 1, estado: 1, fechaHoraIngresoCola: 1 });
 
 module.exports = mongoose.model('Pedido', pedidoSchema);

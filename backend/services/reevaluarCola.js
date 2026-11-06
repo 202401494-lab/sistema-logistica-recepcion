@@ -2,14 +2,19 @@ const Descarga = require('../models/Descarga');
 const Gateway = require('../models/Gateway');
 const Pedido = require('../models/Pedido');
 const registrarEvento = require('./auditoriaEventos');
+const actualizarColaPrioridad = require('./actualizarColaPrioridad');
 
 const reevaluarCola = async ({ gateway, usuarioId, usuario, session }) => {
-  const siguiente = await Pedido.findOne({
-    activo: true,
-    estado: 'EN COLA',
-    tipoProducto: gateway.tipoCargaPermitida,
-    fechaHoraLlegadaReal: { $exists: true },
-  }).sort({ fechaHoraLlegadaReal: 1, fechaCreacion: 1, _id: 1 }).session(session);
+  const { colaPrioridad } = await actualizarColaPrioridad({
+    usuarioId,
+    usuario,
+    session,
+    ordenar: false,
+  });
+  let siguiente = colaPrioridad.extraerSiguiente();
+  while (siguiente && siguiente.tipoProducto !== gateway.tipoCargaPermitida) {
+    siguiente = colaPrioridad.extraerSiguiente();
+  }
 
   if (!siguiente) return null;
 
@@ -36,6 +41,18 @@ const reevaluarCola = async ({ gateway, usuarioId, usuario, session }) => {
     usuarioActualizacion: usuario,
   }], { session });
 
+  await registrarEvento({
+    usuarioId,
+    usuarioCreacion: usuario,
+    accion: 'PROMOCION_AUTOMATICA_GATEWAY',
+    pedidoId: pedidoIniciado._id,
+    detalles: {
+      gatewayId: gatewayAsignado._id,
+      prioridadCalculada: pedidoIniciado.prioridadCalculada,
+      minutosEnEspera: pedidoIniciado.minutosEnEspera,
+    },
+    session,
+  });
   await registrarEvento({
     usuarioId,
     usuarioCreacion: usuario,

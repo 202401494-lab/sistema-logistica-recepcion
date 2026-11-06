@@ -5,11 +5,14 @@ const Descarga = require('../models/Descarga');
 const Evento = require('../models/Evento');
 const Gateway = require('../models/Gateway');
 const Pedido = require('../models/Pedido');
+const Parametro = require('../models/Parametro');
 const reevaluarCola = require('../services/reevaluarCola');
 
 test('promueve el siguiente pedido compatible e inserta eventos de asignación e inicio', async (t) => {
   const pedidoFindOriginal = Pedido.findOne;
+  const pedidoListarOriginal = Pedido.find;
   const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
+  const parametroFindOriginal = Parametro.findOne;
   const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
   const descargaCreateOriginal = Descarga.create;
   const eventoSaveOriginal = Evento.prototype.save;
@@ -17,13 +20,25 @@ test('promueve el siguiente pedido compatible e inserta eventos de asignación e
   const gatewayId = new mongoose.Types.ObjectId();
   const usuarioId = new mongoose.Types.ObjectId();
   const eventos = [];
-  const pedidoEnCola = { _id: pedidoId, estado: 'EN COLA' };
+  const pedidoEnCola = {
+    _id: pedidoId,
+    estado: 'EN COLA',
+    tipoProducto: 'general',
+    estadoPuntualidad: 'A tiempo',
+    fechaHoraProgramada: new Date(),
+    fechaHoraIngresoCola: new Date(),
+    minutosEnEspera: 0,
+    prioridadCalculada: 0,
+  };
 
-  Pedido.findOne = () => ({
-    sort() { return this; },
-    session: async () => pedidoEnCola,
-  });
-  Pedido.findOneAndUpdate = async () => ({ ...pedidoEnCola, estado: 'DESCARGANDO' });
+  Pedido.find = () => ({ session: async () => [pedidoEnCola] });
+  Pedido.findOne = () => ({ session: async () => pedidoEnCola });
+  Pedido.findOneAndUpdate = async (_filtro, cambios) => (
+    cambios.$set.estado
+      ? { ...pedidoEnCola, ...cambios.$set, estado: 'DESCARGANDO' }
+      : { ...pedidoEnCola, ...cambios.$set }
+  );
+  Parametro.findOne = () => ({ session: async () => null });
   Gateway.findOneAndUpdate = async () => ({
     _id: gatewayId,
     estado: 'OCUPADO',
@@ -36,7 +51,9 @@ test('promueve el siguiente pedido compatible e inserta eventos de asignación e
   };
   t.after(() => {
     Pedido.findOne = pedidoFindOriginal;
+    Pedido.find = pedidoListarOriginal;
     Pedido.findOneAndUpdate = pedidoUpdateOriginal;
+    Parametro.findOne = parametroFindOriginal;
     Gateway.findOneAndUpdate = gatewayUpdateOriginal;
     Descarga.create = descargaCreateOriginal;
     Evento.prototype.save = eventoSaveOriginal;
@@ -52,5 +69,9 @@ test('promueve el siguiente pedido compatible e inserta eventos de asignación e
   assert.equal(resultado.pedido.estado, 'DESCARGANDO');
   assert.equal(resultado.gateway.estado, 'OCUPADO');
   assert.equal(resultado.descarga.pedidoId, pedidoId);
-  assert.deepEqual(eventos, ['GATEWAY_ASIGNADO', 'DESCARGADA_INICIADA']);
+  assert.deepEqual(eventos, [
+    'PROMOCION_AUTOMATICA_GATEWAY',
+    'GATEWAY_ASIGNADO',
+    'DESCARGADA_INICIADA',
+  ]);
 });

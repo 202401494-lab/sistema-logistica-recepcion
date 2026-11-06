@@ -1,8 +1,15 @@
 const express = require('express');
 const { verificarToken, autorizarRoles } = require('../middleware/authMiddleware');
-const { actualizarMfaObligatorio } = require('../controllers/usuarioController');
+const { listarUsuarios, actualizarMfaObligatorio } = require('../controllers/usuarioController');
 
 const router = express.Router();
+
+router.get(
+  '/usuarios',
+  verificarToken,
+  autorizarRoles('administrador'),
+  listarUsuarios,
+);
 
 router.patch(
   '/usuarios/:id/mfa-obligatorio',

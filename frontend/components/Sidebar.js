@@ -1,7 +1,9 @@
 import styles from '../styles/sidebar.module.css';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsado, setColapsado }) {
+    const router = useRouter();
     const cerrarEnMovil = () => {
         if (typeof window !== 'undefined' && window.innerWidth <= 768) {
             setColapsado(true);
@@ -55,6 +57,18 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                 </div>
 
                 <nav className={styles.menu}>
+                    <Link
+                        href="/cola"
+                        className={`${router.pathname === '/cola' ? styles.itemActivo : styles.item} ${styles.queueLink}`}
+                        aria-current={router.pathname === '/cola' ? 'page' : undefined}
+                        onClick={cerrarEnMovil}
+                    >
+                        <span className={styles.icon}>⏳</span>
+                        {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
+                            <span className={styles.label}>Cola de espera</span>
+                        )}
+                    </Link>
+
                     {/* HABILITADO PARA COORDINADOR Y ADMINISTRADOR */}
                     {(rol === 'coordinador' || rol === 'administrador') && (
                         <>

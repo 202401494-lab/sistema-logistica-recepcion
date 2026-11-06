@@ -92,6 +92,15 @@ export async function actualizarMfaObligatorio(usuarioId, mfaObligatorio) {
     return procesarRespuesta(respuesta);
 }
 
+export async function obtenerUsuarios(pagina = 1, limite = 10) {
+    const parametros = new URLSearchParams({ pagina: String(pagina), limite: String(limite) });
+    const respuesta = await fetch(`${API_BASE_URL}/usuarios?${parametros}`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(respuesta);
+}
+
 /* Función para registrar un nuevo proveedor */
 export const registrarProveedor = async (datos) => {
     const respuesta = await fetch(`${API_BASE_URL}/proveedores`, {
@@ -221,6 +230,22 @@ export async function obtenerDescargasActivas() {
         headers: obtenerHeaders(),
     });
     return procesarRespuesta(res);
+}
+
+export async function obtenerCola() {
+    const respuesta = await fetch(`${API_BASE_URL}/cola`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function reevaluarCola() {
+    const respuesta = await fetch(`${API_BASE_URL}/cola/reevaluar`, {
+        method: 'POST',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(respuesta);
 }
 
 export async function obtenerKpis(desde, hasta) {
