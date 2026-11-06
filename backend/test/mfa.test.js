@@ -11,7 +11,7 @@ const {
   activarMfa,
   verificarCodigoLogin,
 } = require('../controllers/mfaController');
-const { actualizarMfaObligatorio } = require('../controllers/usuarioController');
+const { listarUsuarios, actualizarMfaObligatorio } = require('../controllers/usuarioController');
 const { verificarToken, verificarTempToken } = require('../middleware/authMiddleware');
 const usuarioRoutes = require('../routes/usuarioRoutes');
 
@@ -348,6 +348,89 @@ test('la ruta administrativa del requisito MFA solo admite administradores', () 
   let continuo = false;
 
   autorizar({ usuario: { rol: 'operador' } }, respuesta, () => { continuo = true; });
+  assert.equal(respuesta.statusCode, 403);
+  assert.equal(continuo, false);
+
+  autorizar({ usuario: { rol: 'administrador' } }, respuesta, () => { continuo = true; });
+  assert.equal(continuo, true);
+});
+
+test('lista usuarios con campos seguros y paginación limitada', async (t) => {
+  const findOriginal = Usuario.find;
+  const countDocumentsOriginal = Usuario.countDocuments;
+  restaurarMetodos(t, {
+    find: findOriginal,
+    countDocuments: countDocumentsOriginal,
+  });
+
+  const usuario = {
+    _id: new mongoose.Types.ObjectId(),
+    email: 'persona@test.com',
+    nombres: 'Ana',
+    apellidosCompleto: 'López',
+    estado: 'activo',
+    mfaObligatorio: true,
+    twoFactorEnabled: false,
+    roles: [{ nombre: 'operador' }],
+  };
+  const cadena = {
+    select(campos) {
+      this.campos = campos;
+      return this;
+    },
+    populate() { return this; },
+    sort() { return this; },
+    skip(valor) {
+      this.salto = valor;
+      return this;
+    },
+    limit(valor) {
+      this.limite = valor;
+      return this;
+    },
+    lean: async () => [usuario],
+  };
+  let filtroConteo;
+  Usuario.find = (filtro) => {
+    cadena.filtro = filtro;
+    return cadena;
+  };
+  Usuario.countDocuments = async (filtro) => {
+    filtroConteo = filtro;
+    return 117;
+  };
+  const respuesta = crearRespuesta();
+
+  await listarUsuarios({ query: { pagina: '2', limite: '100' } }, respuesta);
+
+  assert.equal(respuesta.statusCode, 200);
+  assert.equal(cadena.salto, 50);
+  assert.equal(cadena.limite, 50);
+  assert.deepEqual(cadena.filtro, {});
+  assert.deepEqual(filtroConteo, {});
+  assert.match(cadena.campos, /twoFactorEnabled/);
+  assert.doesNotMatch(cadena.campos, /password|twoFactorSecret|RecoveryCodes/i);
+  assert.deepEqual(respuesta.body.paginacion, {
+    pagina: 2,
+    limite: 50,
+    total: 117,
+    paginas: 3,
+  });
+  assert.equal(respuesta.body.usuarios[0].twoFactorEnabled, false);
+});
+
+test('el listado de usuarios es exclusivo para administradores', () => {
+  const capaRuta = usuarioRoutes.stack.find(
+    (capa) => capa.route?.path === '/usuarios' && capa.route.methods.get,
+  );
+  assert.ok(capaRuta);
+  assert.equal(capaRuta.route.stack.length, 3);
+
+  const autorizar = capaRuta.route.stack[1].handle;
+  const respuesta = crearRespuesta();
+  let continuo = false;
+
+  autorizar({ usuario: { rol: 'coordinador' } }, respuesta, () => { continuo = true; });
   assert.equal(respuesta.statusCode, 403);
   assert.equal(continuo, false);
 

@@ -5,6 +5,7 @@ const Descarga = require('../models/Descarga');
 const Gateway = require('../models/Gateway');
 const Pedido = require('../models/Pedido');
 const Evento = require('../models/Evento');
+const Parametro = require('../models/Parametro');
 const {
   crearGateway,
   actualizarGateway,
@@ -167,6 +168,8 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
   const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
   const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
   const pedidoFindOriginal = Pedido.findOne;
+  const colaFindOriginal = Pedido.find;
+  const parametroFindOriginal = Parametro.findOne;
   const eventoSaveOriginal = Evento.prototype.save;
   const startSessionOriginal = mongoose.startSession;
   const descargaId = new mongoose.Types.ObjectId().toString();
@@ -203,6 +206,8 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
     sort() { return this; },
     session: async () => null,
   });
+  Pedido.find = () => ({ session: async () => [] });
+  Parametro.findOne = () => ({ session: async () => ({ valor: 15 }) });
   Evento.prototype.save = async function guardarEventoPrueba() { return this; };
   mongoose.startSession = async () => ({
     withTransaction: async (operacion) => operacion({}),
@@ -213,6 +218,8 @@ test('finaliza la descarga, calcula su duración y libera el gateway', async (t)
     Descarga.findOneAndUpdate = descargaUpdateOriginal;
     Pedido.findOneAndUpdate = pedidoUpdateOriginal;
     Pedido.findOne = pedidoFindOriginal;
+    Pedido.find = colaFindOriginal;
+    Parametro.findOne = parametroFindOriginal;
     Gateway.findOneAndUpdate = gatewayUpdateOriginal;
     Evento.prototype.save = eventoSaveOriginal;
     mongoose.startSession = startSessionOriginal;
@@ -236,6 +243,8 @@ test('mantiene ocupado el gateway si tiene otra descarga activa', async (t) => {
   const descargaUpdateOriginal = Descarga.findOneAndUpdate;
   const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
   const pedidoFindOriginal = Pedido.findOne;
+  const colaFindOriginal = Pedido.find;
+  const parametroFindOriginal = Parametro.findOne;
   const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
   const eventoSaveOriginal = Evento.prototype.save;
   const startSessionOriginal = mongoose.startSession;
@@ -263,6 +272,8 @@ test('mantiene ocupado el gateway si tiene otra descarga activa', async (t) => {
     sort() { return this; },
     session: async () => null,
   });
+  Pedido.find = () => ({ session: async () => [] });
+  Parametro.findOne = () => ({ session: async () => ({ valor: 15 }) });
   Gateway.findOneAndUpdate = async (filtro, cambios) => {
     filtroGateway = filtro;
     cambiosGateway = cambios.$set;
@@ -282,6 +293,8 @@ test('mantiene ocupado el gateway si tiene otra descarga activa', async (t) => {
     Descarga.findOneAndUpdate = descargaUpdateOriginal;
     Pedido.findOneAndUpdate = pedidoUpdateOriginal;
     Pedido.findOne = pedidoFindOriginal;
+    Pedido.find = colaFindOriginal;
+    Parametro.findOne = parametroFindOriginal;
     Gateway.findOneAndUpdate = gatewayUpdateOriginal;
     Evento.prototype.save = eventoSaveOriginal;
     mongoose.startSession = startSessionOriginal;
@@ -304,6 +317,8 @@ test('finaliza una descarga y marca FINALIZADO el pedido aunque esté inactivo',
   const descargaUpdateOriginal = Descarga.findOneAndUpdate;
   const pedidoUpdateOriginal = Pedido.findOneAndUpdate;
   const pedidoFindOriginal = Pedido.findOne;
+  const colaFindOriginal = Pedido.find;
+  const parametroFindOriginal = Parametro.findOne;
   const gatewayUpdateOriginal = Gateway.findOneAndUpdate;
   const eventoSaveOriginal = Evento.prototype.save;
   const startSessionOriginal = mongoose.startSession;
@@ -336,6 +351,8 @@ test('finaliza una descarga y marca FINALIZADO el pedido aunque esté inactivo',
     sort() { return this; },
     session: async () => null,
   });
+  Pedido.find = () => ({ session: async () => [] });
+  Parametro.findOne = () => ({ session: async () => ({ valor: 15 }) });
   Gateway.findOneAndUpdate = async (_filtro, cambios) => {
     cambiosGateway = cambios.$set;
     return { _id: gatewayId, estado: cambios.$set.estado };
@@ -353,6 +370,8 @@ test('finaliza una descarga y marca FINALIZADO el pedido aunque esté inactivo',
     Descarga.findOneAndUpdate = descargaUpdateOriginal;
     Pedido.findOneAndUpdate = pedidoUpdateOriginal;
     Pedido.findOne = pedidoFindOriginal;
+    Pedido.find = colaFindOriginal;
+    Parametro.findOne = parametroFindOriginal;
     Gateway.findOneAndUpdate = gatewayUpdateOriginal;
     Evento.prototype.save = eventoSaveOriginal;
     mongoose.startSession = startSessionOriginal;

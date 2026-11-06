@@ -1,6 +1,45 @@
 const mongoose = require('mongoose');
 const Usuario = require('../models/Usuario');
 
+const listarUsuarios = async (req, res) => {
+  const pagina = req.query?.pagina === undefined ? 1 : Number(req.query.pagina);
+  const limiteSolicitado = req.query?.limite === undefined ? 10 : Number(req.query.limite);
+
+  if (!Number.isInteger(pagina) || !Number.isInteger(limiteSolicitado)
+    || pagina < 1 || limiteSolicitado < 1) {
+    return res.status(400).json({ mensaje: 'pagina y limite deben ser enteros positivos' });
+  }
+
+  const limite = Math.min(limiteSolicitado, 50);
+  const salto = (pagina - 1) * limite;
+
+  try {
+    const [usuarios, total] = await Promise.all([
+      Usuario.find({})
+        .select('_id nombres apellidosCompleto email roles estado mfaObligatorio twoFactorEnabled createdAt')
+        .populate('roles', 'nombre')
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(salto)
+        .limit(limite)
+        .lean(),
+      Usuario.countDocuments({}),
+    ]);
+
+    return res.status(200).json({
+      usuarios,
+      paginacion: {
+        pagina,
+        limite,
+        total,
+        paginas: Math.ceil(total / limite),
+      },
+    });
+  } catch (error) {
+    console.error('Error al listar usuarios:', error);
+    return res.status(500).json({ mensaje: 'Error interno al listar usuarios' });
+  }
+};
+
 const actualizarMfaObligatorio = async (req, res) => {
   const { id } = req.params;
   const { mfaObligatorio } = req.body;
@@ -49,4 +88,4 @@ const actualizarMfaObligatorio = async (req, res) => {
   }
 };
 
-module.exports = { actualizarMfaObligatorio };
+module.exports = { listarUsuarios, actualizarMfaObligatorio };

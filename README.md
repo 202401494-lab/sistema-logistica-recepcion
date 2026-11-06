@@ -42,6 +42,9 @@ Para MongoDB local, inicia `mongod` con `--replSet rs0` y ejecuta una vez `mongo
 - GET `/api/coordinacion` -> administradores y coordinadores
 - PATCH `/api/pedidos/:id/llegada` -> operador o administrador; registra hora real, puntualidad y espera anticipada
 - POST `/api/descargas/iniciar` y POST `/api/descargas/finalizar` -> ciclo transaccional de descarga y reevaluación de cola
+- GET `/api/cola` -> devuelve los pedidos `EN COLA` ordenados por prioridad calculada; requiere JWT
+- POST `/api/cola/reevaluar` -> recalcula espera/prioridad y aplica Aging; requiere JWT
+- GET `/api/usuarios?pagina=1&limite=10` -> lista usuarios paginados, solo administradores; omite credenciales y secretos MFA
 - GET `/api/kpis?desde=<ISO>&hasta=<ISO>` -> coordinador o administrador; período opcional de hasta 30 días por defecto
 - PUT `/api/gateways/:id` -> los cambios de mantenimiento se registran en la bitácora inmutable
 - GET/POST `/api/parametros` y PUT/DELETE `/api/parametros/:id` -> solo administradores
@@ -49,13 +52,21 @@ Para MongoDB local, inicia `mongod` con `--replSet rs0` y ejecuta una vez `mongo
 ### Autenticación multifactor (MFA)
 
 - POST `/api/auth/login` devuelve un JWT de acceso de 8 horas si el usuario no requiere MFA. Si MFA es obligatorio o ya está activado, devuelve un `tempToken` válido por 5 minutos y no un JWT de acceso.
+
 - POST `/api/mfa/setup` y POST `/api/mfa/enable` -> requieren `Authorization: Bearer <tempToken>`; el primero devuelve el URI `otpauth://` para generar el QR y el segundo recibe `{ "code": "123456" }` para confirmar el enrolamiento.
+
 - POST `/api/auth/mfa/verify-login` -> requiere el token temporal y `{ "code": "123456" }`; solo con un TOTP válido entrega el JWT definitivo de 8 horas.
+
 - PATCH `/api/usuarios/:id/mfa-obligatorio` -> requiere JWT de administrador y `{ "mfaObligatorio": true|false }`. Al enviar `false`, también desactiva el autenticador y elimina su clave y códigos de recuperación; al volver a activarlo, el usuario debe enrolarse nuevamente.
+
+- `twoFactorEnabled` indica si la persona ya configuró MFA; `mfaObligatorio` es el requisito administrativo para iniciar sesión. Son estados distintos y solo el administrador puede cambiar el requisito.
+
 - Los códigos TOTP aceptan una ventana de tolerancia de un intervalo (30 segundos). Las claves MFA, contraseñas y códigos de recuperación no se incluyen en consultas normales de usuarios.
 - `MFA_ISSUER` configura el nombre mostrado por las aplicaciones de autenticación; su valor predeterminado es `Sistema Logística`.
 
 Para activar la marcación automática de ausencias, crea `TOLERANCIA_LLEGADA_MINUTOS` con un valor entero igual o mayor a cero. Si el parámetro se inactiva, un nuevo POST con la misma clave lo reactiva y actualiza el valor. El backend revisa los pedidos cada minuto; no aplica una tolerancia predeterminada si el parámetro no está configurado.
+
+La prioridad de la cola usa puntualidad, hora programada y espera acumulada. El parámetro `factor_aging_min` configura cada cuántos minutos aumenta la prioridad; si no existe, el sistema usa 15 minutos. La liberación de un gateway selecciona automáticamente el pedido compatible con mayor prioridad. La pantalla `/cola` se actualiza cada 15 segundos y permite forzar una reevaluación.
 
 ### Pruebas del backend
 
@@ -91,6 +102,11 @@ backend/
   routes/protectedRoutes.js   -> rutas protegidas con JWT
   seed.js                     -> crea roles + usuarios prueba
   server.js                   -> punto de entrada del backend
+  controllers/colaController.js -> controladores de la cola y reevaluación
+  routes/colaRoutes.js           -> rutas para GET /api/cola y POST /api/cola/reevaluar
+  services/colaPrioridad.js      -> implementación del Heap Binario
+  services/actualizarColaPrioridad.js -> lógica de Aging para evitar inanición
+  services/reevaluarCola.js      -> asignación automática al liberar gateways
 
 frontend/
   components/LogoutButton.js  -> cerrar sesión
@@ -106,6 +122,10 @@ frontend/
   pages/admin.js              -> vista del administrador
   pages/coordinador.js        -> vista del coordinador
   pages/operador.js           -> vista del operador
+  components/UserManagement.js   -> componente de gestión de usuarios
+  pages/cola.js                  -> tablero interactivo de la Cola de Espera
+  styles/cola.module.css         -> estilos responsivos de las tarjetas de prioridad
+  styles/userManagement.module.css -> estilos de la gestión de usuarios
 ```
 
 ## 5. Cómo entender cada apartado rápido
