@@ -6,11 +6,12 @@ const bcrypt = require('bcrypt');
 const Role = require('./models/Role');
 const Usuario = require('./models/Usuario');
 const Gateway = require('./models/Gateway');
+const { PERMISOS_PREDETERMINADOS } = require('./services/permisosRoles');
 
 const rolesData = [
-  { nombre: 'administrador', descripcion: 'Control total del sistema' },
-  { nombre: 'coordinador', descripcion: 'Supervisión de operaciones' },
-  { nombre: 'operador', descripcion: 'Ejecución de tareas operativas' },
+  { nombreRol: 'administrador', nombre: 'administrador', descripcion: 'Control total del sistema', permisos: PERMISOS_PREDETERMINADOS.administrador },
+  { nombreRol: 'coordinador', nombre: 'coordinador', descripcion: 'Supervisión de operaciones', permisos: PERMISOS_PREDETERMINADOS.coordinador },
+  { nombreRol: 'operador', nombre: 'operador', descripcion: 'Ejecución de tareas operativas', permisos: PERMISOS_PREDETERMINADOS.operador },
 ];
 
 const usuariosData = [
@@ -24,27 +25,52 @@ const seed = async () => {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Conectado a MongoDB para seed');
 
-  // Se limpian estas colecciones para que el seed sea repetible sin duplicados.
-  // No debe ejecutarse así en producción porque elimina los datos existentes.
-  await Role.deleteMany({});
-  const rolesCreados = await Role.insertMany(rolesData);
-  console.log('Roles creados:', rolesCreados.map((r) => r.nombre).join(', '));
-
-  await Usuario.deleteMany({});
+  const rolesCreados = [];
+  for (const datosRol of rolesData) {
+    let rol = await Role.findOne({
+      $or: [{ nombreRol: datosRol.nombreRol }, { nombre: datosRol.nombreRol }],
+    }).collation({ locale: 'es', strength: 2 });
+    if (!rol) {
+      rol = await Role.create({
+        ...datosRol,
+        activo: true,
+        usuarioCreacion: 'sistema',
+        usuarioActualizacion: 'sistema',
+      });
+    } else {
+      const datosGuardados = await Role.collection.findOne(
+        { _id: rol._id },
+        { projection: { permisos: 1, activo: 1 } },
+      );
+      rol.nombreRol = rol.nombreRol || datosRol.nombreRol;
+      rol.nombre = rol.nombre || datosRol.nombre;
+      rol.descripcion = rol.descripcion || datosRol.descripcion;
+      if (!Object.hasOwn(datosGuardados || {}, 'permisos')) rol.permisos = datosRol.permisos;
+      if (!Object.hasOwn(datosGuardados || {}, 'activo')) rol.activo = true;
+      await rol.save();
+    }
+    rolesCreados.push(rol);
+  }
+  console.log('Roles iniciales creados o actualizados:', rolesCreados.map((r) => r.nombreRol).join(', '));
 
   for (const u of usuariosData) {
-    // La contraseña plana solo se usa durante el seed; MongoDB recibe únicamente el hash.
-    const rolDoc = rolesCreados.find((r) => r.nombre === u.rol);
+    const rolDoc = rolesCreados.find((r) => r.nombreRol === u.rol);
     const passwordHash = await bcrypt.hash(u.passwordPlano, 10);
-    await Usuario.create({
-      nombres: u.nombres,
-      apellidosCompleto: u.apellidosCompleto,
-      email: u.email,
-      password: passwordHash,
-      roles: [rolDoc._id],
-      estado: 'activo',
-    });
-    console.log(`Usuario creado -> email: ${u.email} | password: ${u.passwordPlano}`);
+    await Usuario.updateOne(
+      { email: u.email },
+      {
+        $setOnInsert: {
+          nombres: u.nombres,
+          apellidosCompleto: u.apellidosCompleto,
+          email: u.email,
+          password: passwordHash,
+          roles: [rolDoc._id],
+          estado: 'activo',
+        },
+      },
+      { upsert: true },
+    );
+    console.log(`Usuario creado o conservado -> email: ${u.email}`);
   }
 
   for (const numeroGateway of [1, 2, 3, 4, 5]) {
@@ -56,7 +82,6 @@ const seed = async () => {
           tipoCargaPermitida: numeroGateway === 5 ? 'construcción' : 'general',
           estado: 'LIBRE',
           usuarioCreacion: 'sistema',
-          usuarioActualizacion: 'sistema',
         },
       },
       { upsert: true },

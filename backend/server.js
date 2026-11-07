@@ -17,6 +17,7 @@ const colaRoutes = require('./routes/colaRoutes');
 const kpisRoutes = require('./routes/kpisRoutes');
 const mfaRoutes = require('./routes/mfaRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
+const rolesRoutes = require('./routes/rolesRoutes');
 const actualizarEstadosLlegadas = require('./services/llegadasScheduler');
 
 const app = express();
@@ -38,6 +39,7 @@ conectarDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/mfa', mfaRoutes);
 app.use('/api', usuarioRoutes);
+app.use('/api', rolesRoutes);
 app.use('/api', logisticaRoutes);
 app.use('/api/parametros', parametroRoutes);
 app.use('/api', gatewaysRoutes);

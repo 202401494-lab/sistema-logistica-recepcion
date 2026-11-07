@@ -2,8 +2,15 @@ import styles from '../styles/sidebar.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsado, setColapsado }) {
+export default function Sidebar({ rol, permisos, seccionActiva, setSeccionActiva, colapsado, setColapsado }) {
     const router = useRouter();
+    const permisosPredeterminados = {
+        administrador: ['usuarios', 'roles', 'proveedores', 'pedidos', 'gateways', 'descargas', 'cola', 'kpis'],
+        coordinador: ['proveedores', 'pedidos', 'gateways', 'descargas', 'cola', 'kpis'],
+        operador: ['pedidos', 'gateways', 'descargas', 'cola'],
+    };
+    const permisosActivos = Array.isArray(permisos) ? permisos : (permisosPredeterminados[rol] || []);
+    const puede = (modulo) => permisosActivos.includes(modulo);
     const cerrarEnMovil = () => {
         if (typeof window !== 'undefined' && window.innerWidth <= 768) {
             setColapsado(true);
@@ -57,7 +64,7 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                 </div>
 
                 <nav className={styles.menu}>
-                    <Link
+                    {puede('cola') && <Link
                         href="/cola"
                         className={`${router.pathname === '/cola' ? styles.itemActivo : styles.item} ${styles.queueLink}`}
                         aria-current={router.pathname === '/cola' ? 'page' : undefined}
@@ -67,11 +74,9 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                         {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
                             <span className={styles.label}>Cola de espera</span>
                         )}
-                    </Link>
+                    </Link>}
 
-                    {/* HABILITADO PARA COORDINADOR Y ADMINISTRADOR */}
-                    {(rol === 'coordinador' || rol === 'administrador') && (
-                        <>
+                    {puede('pedidos') && (
                             <button
                                 type="button"
                                 className={seccionActiva === 'resumen' ? styles.itemActivo : styles.item}
@@ -84,6 +89,10 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                 )}
                             </button>
 
+                    )}
+
+                    {puede('proveedores') && (
+                        <>
                             <button
                                 type="button"
                                 className={seccionActiva === 'proveedor' ? styles.itemActivo : styles.item}
@@ -108,6 +117,10 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                 )}
                             </button>
 
+                        </>
+                    )}
+
+                    {puede('pedidos') && (
                             <button
                                 type="button"
                                 className={seccionActiva === 'pedido' ? styles.itemActivo : styles.item}
@@ -120,7 +133,9 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                 )}
                             </button>
 
-                            {/* Tablero de Gateways */}
+                    )}
+
+                    {puede('gateways') && (
                             <button
                                 type="button"
                                 className={seccionActiva === 'gateways' ? styles.itemActivo : styles.item}
@@ -133,6 +148,9 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                 )}
                             </button>
 
+                    )}
+
+                    {puede('kpis') && (
                             <button
                                 type="button"
                                 className={seccionActiva === 'kpis' ? styles.itemActivo : styles.item}
@@ -144,23 +162,38 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                                     <span className={styles.label}>Indicadores</span>
                                 )}
                             </button>
+                    )}
+
+                    {rol === 'administrador' && puede('usuarios') && (
+                        <>
+                            <Link
+                                href="/usuarios/gestion"
+                                className={styles.item}
+                                onClick={cerrarEnMovil}
+                            >
+                                <span className={styles.icon}>👥</span>
+                                {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
+                                    <span className={styles.label}>Gestión de usuarios</span>
+                                )}
+                            </Link>
                         </>
                     )}
 
-                    {rol === 'administrador' && (
+                    {rol === 'administrador' && puede('roles') && (
                         <Link
-                            href="/usuarios/gestion"
-                            className={styles.item}
+                            href="/admin/roles"
+                            className={`${router.pathname === '/admin/roles' ? styles.itemActivo : styles.item} ${styles.queueLink}`}
+                            aria-current={router.pathname === '/admin/roles' ? 'page' : undefined}
                             onClick={cerrarEnMovil}
                         >
-                            <span className={styles.icon}>👥</span>
+                            <span className={styles.icon}>🛡️</span>
                             {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
-                                <span className={styles.label}>Gestión de usuarios</span>
+                                <span className={styles.label}>Gestión de roles</span>
                             )}
                         </Link>
                     )}
 
-                    <button
+                    {puede('pedidos') && <button
                         type="button"
                         className={styles.item}
                         onClick={() => window.location.href = '/caseta'}
@@ -169,7 +202,7 @@ export default function Sidebar({ rol, seccionActiva, setSeccionActiva, colapsad
                         {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (
                             <span className={styles.label}>Caseta</span>
                         )}
-                    </button>
+                    </button>}
                 </nav>
 
                 {(!colapsado || (typeof window !== 'undefined' && window.innerWidth <= 768)) && (

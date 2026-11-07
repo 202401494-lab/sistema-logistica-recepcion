@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const Usuario = require('../models/Usuario');
 const { crearTokenTemporalMfa, crearTokenAcceso } = require('../services/authTokens');
+const { obtenerNombreRol } = require('../services/permisosRoles');
 require('../models/Role');
 
 // POST /api/auth/login
@@ -36,7 +37,7 @@ const login = async (req, res) => {
 
     // Para esta actividad cada usuario de prueba tiene un solo rol asignado,
     // aunque el esquema soporta muchos a muchos (arreglo de roles).
-    const rolPrincipal = usuario.roles.length > 0 ? usuario.roles[0].nombre : null;
+    const rolPrincipal = usuario.roles.length > 0 ? obtenerNombreRol(usuario.roles[0]) : null;
 
     if (usuario.mfaObligatorio || usuario.twoFactorEnabled) {
       const tempToken = crearTokenTemporalMfa(usuario);

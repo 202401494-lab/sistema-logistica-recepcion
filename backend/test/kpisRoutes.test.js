@@ -1,14 +1,21 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const router = require('../routes/kpisRoutes');
+const Usuario = require('../models/Usuario');
 
-test('restringe el endpoint KPI a coordinador y administrador', () => {
+test('restringe el endpoint KPI según los permisos activos del usuario', async (t) => {
   const ruta = router.stack.find((capa) => capa.route?.path === '/kpis');
   assert.ok(ruta);
   assert.equal(ruta.route.methods.get, true);
+  const autorizarKpis = ruta.route.stack[1].handle;
 
-  const autorizar = ruta.route.stack[1].handle;
-  const respuesta = {
+  const findOneOriginal = Usuario.findOne;
+  t.after(() => { Usuario.findOne = findOneOriginal; });
+  let rolesUsuario = [];
+  Usuario.findOne = () => ({
+    populate: async () => ({ roles: rolesUsuario }),
+  });
+  const crearRespuesta = () => ({
     statusCode: null,
     status(codigo) {
       this.statusCode = codigo;
@@ -18,13 +25,26 @@ test('restringe el endpoint KPI a coordinador y administrador', () => {
       this.body = body;
       return this;
     },
-  };
-  let continuo = false;
+  });
 
-  autorizar({ usuario: { rol: 'operador' } }, respuesta, () => { continuo = true; });
-  assert.equal(respuesta.statusCode, 403);
+  rolesUsuario = [{ nombreRol: 'operador', permisos: ['pedidos'] }];
+  const respuestaDenegada = crearRespuesta();
+  let continuo = false;
+  await autorizarKpis(
+    { usuario: { id: 'usuario-1' } },
+    respuestaDenegada,
+    () => { continuo = true; },
+  );
+  assert.equal(respuestaDenegada.statusCode, 403);
   assert.equal(continuo, false);
 
-  autorizar({ usuario: { rol: 'coordinador' } }, respuesta, () => { continuo = true; });
+  rolesUsuario = [{ nombreRol: 'auditor', permisos: ['kpis'] }];
+  const respuestaPermitida = crearRespuesta();
+  await autorizarKpis(
+    { usuario: { id: 'usuario-1' } },
+    respuestaPermitida,
+    () => { continuo = true; },
+  );
+  assert.equal(respuestaPermitida.statusCode, null);
   assert.equal(continuo, true);
 });

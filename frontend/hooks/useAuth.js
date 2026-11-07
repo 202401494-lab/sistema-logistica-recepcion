@@ -12,6 +12,7 @@ import { obtenerToken, decodeJWT, tokenExpirado } from '../lib/auth';
 export function useAuth(rolRequerido = null) {
     const router = useRouter();
     const [rol, setRol] = useState(null);
+    const [permisos, setPermisos] = useState(null);
     const [cargando, setCargando] = useState(true);
 
     /* Efecto para verificar la sesión y el rol del usuario */
@@ -34,9 +35,12 @@ export function useAuth(rolRequerido = null) {
 
         /* Si todo es válido, entrega el rol al dashboard y termina la carga. */
         setRol(payload.rol);
+        setPermisos(Object.hasOwn(payload, 'permisos') && Array.isArray(payload.permisos)
+            ? payload.permisos
+            : null);
         setCargando(false);
     }, [rolRequerido, router]);
 
     /* Retorna el rol del usuario y el estado de carga */
-    return { rol, cargando };
+    return { rol, permisos, cargando };
 }
