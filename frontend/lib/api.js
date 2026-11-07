@@ -101,6 +101,67 @@ export async function obtenerUsuarios(pagina = 1, limite = 10) {
     return procesarRespuesta(respuesta);
 }
 
+export async function crearUsuario(datos) {
+    const respuesta = await fetch(`${API_BASE_URL}/usuarios`, {
+        method: 'POST',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datos),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function actualizarUsuario(usuarioId, datos) {
+    const respuesta = await fetch(`${API_BASE_URL}/usuarios/${usuarioId}`, {
+        method: 'PUT',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datos),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function desactivarUsuario(usuarioId) {
+    const respuesta = await fetch(`${API_BASE_URL}/usuarios/${usuarioId}`, {
+        method: 'DELETE',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function obtenerRoles(activo) {
+    const filtroActivo = typeof activo === 'boolean' ? `?activo=${activo}` : '';
+    const respuesta = await fetch(`${API_BASE_URL}/roles${filtroActivo}`, {
+        method: 'GET',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function crearRol(datos) {
+    const respuesta = await fetch(`${API_BASE_URL}/roles`, {
+        method: 'POST',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datos),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function actualizarRol(rolId, datos) {
+    const respuesta = await fetch(`${API_BASE_URL}/roles/${rolId}`, {
+        method: 'PUT',
+        headers: obtenerHeaders(),
+        body: JSON.stringify(datos),
+    });
+    return procesarRespuesta(respuesta);
+}
+
+export async function desactivarRol(rolId) {
+    const respuesta = await fetch(`${API_BASE_URL}/roles/${rolId}`, {
+        method: 'DELETE',
+        headers: obtenerHeaders(),
+    });
+    return procesarRespuesta(respuesta);
+}
+
 /* Función para registrar un nuevo proveedor */
 export const registrarProveedor = async (datos) => {
     const respuesta = await fetch(`${API_BASE_URL}/proveedores`, {

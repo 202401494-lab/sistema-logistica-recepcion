@@ -143,6 +143,168 @@
   font-size: 0.88rem;
 }
 
+.createUserButton {
+  flex: 0 0 auto;
+  padding: .65rem .85rem;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: #1d4ed8;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.createUserButton:hover {
+  background: #1e40af;
+}
+
+.userForm {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 1.25rem;
+  padding: 1rem;
+  border: 1px solid #dce8f8;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.userFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+}
+
+.userFields label {
+  display: grid;
+  gap: .35rem;
+  color: #34445d;
+  font-size: .75rem;
+  font-weight: 750;
+}
+
+.userFields input,
+.userFields select {
+  min-width: 0;
+  min-height: 40px;
+  padding: .5rem .65rem;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  color: #26364f;
+  background: #fff;
+  font: inherit;
+  font-weight: 500;
+}
+
+.roleSelector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin: 0;
+  padding: .8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.roleSelector legend {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 0 .35rem;
+  color: #34445d;
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.roleSelector label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .4rem .55rem;
+  border-radius: 999px;
+  color: #334155;
+  background: #eef2f7;
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roleSelector input,
+.mfaFormSwitch input {
+  accent-color: #2563eb;
+}
+
+.roleSelector p {
+  width: 100%;
+  margin: 0;
+  color: #8a4b10;
+  font-size: .78rem;
+}
+
+.mfaFormSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  color: #34445d;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.saveUserButton {
+  justify-self: start;
+  padding: .65rem .9rem;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.saveUserButton:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.userActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.editUserButton,
+.deactivateUserButton,
+.activateUserButton {
+  padding: .4rem .55rem;
+  border: 1px solid #dce4ef;
+  border-radius: 7px;
+  background: #fff;
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.editUserButton {
+  color: #1d4ed8;
+}
+
+.deactivateUserButton {
+  color: #b91c1c;
+}
+
+.activateUserButton {
+  color: #15803d;
+}
+
+.userActions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
 .sectionEyebrow {
   display: block;
   margin-bottom: 0.35rem;
@@ -430,6 +592,15 @@
     align-items: flex-start;
     flex-direction: column;
     padding: 1rem;
+  }
+
+  .userForm {
+    margin-inline: .75rem;
+    padding: .8rem;
+  }
+
+  .userFields {
+    grid-template-columns: 1fr;
   }
 
   .mfaLegend {

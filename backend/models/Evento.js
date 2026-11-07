@@ -10,6 +10,10 @@ const ACCIONES_EVENTO = [
   'INGRESO_COLA',
   'AGING_APLICADO',
   'PROMOCION_AUTOMATICA_GATEWAY',
+  'ROL_CREADO',
+  'ROL_MODIFICADO',
+  'ROL_DESACTIVADO',
+  'ROL_ASIGNADO_USUARIO',
 ];
 
 const eventoSchema = new mongoose.Schema(

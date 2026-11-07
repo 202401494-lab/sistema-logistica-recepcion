@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { obtenerNombreRol, obtenerPermisosUsuario } = require('./permisosRoles');
 
 const crearTokenTemporalMfa = (usuario) =>
   jwt.sign(
@@ -13,6 +14,8 @@ const crearTokenAcceso = (usuario, rol) =>
       id: String(usuario._id),
       email: usuario.email,
       rol,
+      roles: (usuario.roles || []).map(obtenerNombreRol).filter(Boolean),
+      permisos: obtenerPermisosUsuario(usuario),
       nombreCompleto: `${usuario.nombres} ${usuario.apellidosCompleto}`.trim(),
     },
     process.env.JWT_SECRET,

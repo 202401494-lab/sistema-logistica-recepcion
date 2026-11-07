@@ -22,7 +22,7 @@ const clasePuntualidad = (estado) => {
 };
 
 export default function ColaPage() {
-  const { rol, cargando } = useAuth();
+  const { rol, permisos, cargando } = useAuth();
   const [cola, setCola] = useState([]);
   const [cargandoCola, setCargandoCola] = useState(true);
   const [reevaluando, setReevaluando] = useState(false);
@@ -89,6 +89,7 @@ export default function ColaPage() {
     <div className={styles.layout} style={{ '--role-background': fondoPorRol }}>
       <Sidebar
         rol={rol}
+        permisos={permisos}
         seccionActiva="cola"
         setSeccionActiva={() => {}}
         colapsado={sidebarColapsado}

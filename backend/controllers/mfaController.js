@@ -1,6 +1,7 @@
 const speakeasy = require('speakeasy');
 const Usuario = require('../models/Usuario');
 const { crearTokenAcceso } = require('../services/authTokens');
+const { obtenerNombreRol } = require('../services/permisosRoles');
 
 const obtenerUsuarioPendiente = (id) =>
   Usuario.findById(id).select('+twoFactorSecret');
@@ -135,7 +136,7 @@ const verificarCodigoLogin = async (req, res) => {
       return res.status(401).json({ mensaje: 'El código MFA es inválido o expiró' });
     }
 
-    const rolPrincipal = usuario.roles.length > 0 ? usuario.roles[0].nombre : null;
+    const rolPrincipal = usuario.roles.length > 0 ? obtenerNombreRol(usuario.roles[0]) : null;
     const token = crearTokenAcceso(usuario, rolPrincipal);
 
     return res.status(200).json({

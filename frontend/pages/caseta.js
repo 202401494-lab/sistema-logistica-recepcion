@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '../styles/Caseta.module.css';
 
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 const COLOR_ROL = {
     administrador: { bg: '#0b192c', btn: '#1e3a8a', accent: '#3b82f6' },
@@ -82,7 +82,7 @@ export default function Caseta() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ fechaLlegada: new Date().toISOString() }),
+                body: JSON.stringify({ fechaHoraLlegadaReal: new Date().toISOString() }),
             });
 
             const data = await res.json();

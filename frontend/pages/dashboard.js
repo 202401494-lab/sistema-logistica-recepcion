@@ -36,7 +36,7 @@ const configuracionPorRol = {
 };
 
 export default function Dashboard() {
-  const { rol, cargando } = useAuth();
+  const { rol, permisos, cargando } = useAuth();
   const [seccionActiva, setSeccionActiva] = useState('resumen');
   const [proveedores, setProveedores] = useState([]);
   const [pedidos, setPedidos] = useState([]);
@@ -51,7 +51,18 @@ export default function Dashboard() {
     }
   }, []);
 
-  const configuracion = configuracionPorRol[rol] || configuracionPorRol.operador;
+  const permisosPredeterminados = {
+    administrador: ['usuarios', 'roles', 'proveedores', 'pedidos', 'gateways', 'descargas', 'cola', 'kpis'],
+    coordinador: ['proveedores', 'pedidos', 'gateways', 'descargas', 'cola', 'kpis'],
+    operador: ['pedidos', 'gateways', 'descargas', 'cola'],
+  };
+  const permisosActivos = Array.isArray(permisos) ? permisos : (permisosPredeterminados[rol] || []);
+  const configuracion = configuracionPorRol[rol] || {
+    titulo: `Centro de ${rol || 'operaciones'}`,
+    descripcion: 'Acceso de acuerdo con los permisos asignados a tu perfil',
+    acciones: [],
+    clase: 'containerCoordinador',
+  };
 
   const cargarPedidos = async () => {
     setCargandoPedidos(true);
@@ -75,11 +86,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (rol === 'coordinador' || rol === 'administrador' || rol === 'operador') {
-      cargarProveedores();
-      cargarPedidos();
-    }
-  }, [rol]);
+    if (permisosActivos.includes('proveedores')) cargarProveedores();
+    if (permisosActivos.includes('pedidos')) cargarPedidos();
+  }, [rol, permisos]);
 
   const manejarProveedorCreado = (proveedorNuevo) => {
     setProveedores((actuales) => [...actuales, proveedorNuevo]);
@@ -101,9 +110,7 @@ export default function Dashboard() {
     );
   }
 
-  const rolesPermitidos = ['coordinador', 'administrador', 'operador'];
-
-  if (!rolesPermitidos.includes(rol)) {
+  if (permisosActivos.length === 0) {
     return (
       <main className={`${roleStyles.container} ${roleStyles[configuracion.clase]}`}>
         <section className={styles.restrictedCard}>
@@ -120,6 +127,7 @@ export default function Dashboard() {
     <div style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
       <Sidebar
         rol={rol}
+        permisos={permisosActivos}
         seccionActiva={seccionActiva}
         setSeccionActiva={setSeccionActiva}
         colapsado={sidebarColapsado}
@@ -147,7 +155,7 @@ export default function Dashboard() {
             </div>
           </header>
 
-          {seccionActiva === 'resumen' && (
+          {seccionActiva === 'resumen' && permisosActivos.includes('pedidos') && (
             <>
               <ResumenPedidosCard
                 pedidos={pedidos}
@@ -164,18 +172,18 @@ export default function Dashboard() {
             </>
           )}
 
-          {seccionActiva === 'proveedor' && (
+          {seccionActiva === 'proveedor' && permisosActivos.includes('proveedores') && (
             <ProveedorForm onProveedorCreado={manejarProveedorCreado} />
           )}
 
-          {seccionActiva === 'listaProveedores' && (
+          {seccionActiva === 'listaProveedores' && permisosActivos.includes('proveedores') && (
             <ProveedorList
               proveedores={proveedores}
               onActualizar={cargarProveedores}
             />
           )}
 
-          {seccionActiva === 'pedido' && (
+          {seccionActiva === 'pedido' && permisosActivos.includes('pedidos') && (
             <PedidoForm
               proveedores={proveedores}
               onPedidoCreado={manejarPedidoCreado}
@@ -183,7 +191,7 @@ export default function Dashboard() {
           )}
 
           {/* Tablero de Gateways */}
-          {seccionActiva === 'gateways' && (
+          {seccionActiva === 'gateways' && permisosActivos.includes('gateways') && (
             <TableroGateways
               pedidosEnCola={pedidos}
               onActualizarDatos={cargarPedidos}
@@ -192,7 +200,7 @@ export default function Dashboard() {
             />
           )}
 
-          {seccionActiva === 'kpis' && (rol === 'coordinador' || rol === 'administrador') && (
+          {seccionActiva === 'kpis' && permisosActivos.includes('kpis') && (
             <DashboardKpis />
           )}
         </section>

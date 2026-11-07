@@ -6,6 +6,8 @@
 // a rutas protegidas del backend.
 
 const jwt = require('jsonwebtoken');
+const Usuario = require('../models/Usuario');
+const { obtenerPermisosUsuario } = require('../services/permisosRoles');
 
 // Verifica y decodifica el token JWT enviado por el cliente
 const verificarToken = (req, res, next) => {
@@ -80,8 +82,33 @@ const autorizarRoles = (...rolesPermitidos) => {
   };
 };
 
+const checkPermission = (permisoRequerido) => async (req, res, next) => {
+  if (!req.usuario?.id) {
+    return res.status(401).json({ mensaje: 'Se requiere una sesión autenticada' });
+  }
+  try {
+    const usuario = await Usuario.findOne({ _id: req.usuario.id, estado: 'activo' }).populate('roles');
+    if (!usuario) {
+      return res.status(401).json({ mensaje: 'La cuenta ya no está activa' });
+    }
+
+    const permisos = obtenerPermisosUsuario(usuario);
+    if (!permisos.includes(permisoRequerido)) {
+      return res.status(403).json({
+        mensaje: `No tienes permiso para acceder al módulo ${permisoRequerido}`,
+      });
+    }
+    req.permisos = permisos;
+    return next();
+  } catch (error) {
+    console.error('Error al comprobar permisos del usuario:', error);
+    return res.status(500).json({ mensaje: 'No se pudieron comprobar los permisos' });
+  }
+};
+
 module.exports = {
   verificarToken,
   verificarTempToken,
   autorizarRoles,
+  checkPermission,
 };
